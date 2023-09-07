@@ -1,6 +1,4 @@
 .DS_store
-build/
-cmake-build-debug-esp-idf/
-sdkconfig.old
-managed_components/
+burp.yml
+.burp
 

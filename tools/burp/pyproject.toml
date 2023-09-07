@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "burp"
+version = "0.1.0"
+description = ""
+authors = ["Peter Halliday <pghalliday@gmail.com>"]
+readme = "README.md"
+packages = [{include = "burp", from = "src"}]
+
+[tool.poetry.scripts]
+burp = "burp.cli:cli"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+injector = "^0.21.0"
+click = "^8.1.7"
+pyyaml = "^6.0.1"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
