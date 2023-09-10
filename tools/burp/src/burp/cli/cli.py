@@ -1,6 +1,6 @@
-import asyncio
 import logging
 import sys
+from asyncio import run
 from enum import Enum
 from importlib import metadata
 from pathlib import Path
@@ -11,6 +11,7 @@ from injector import Injector
 from burp.cli.burp_module import BurpModule
 from burp.commands.check_devices import CheckDevices
 from burp.commands.device_command import DeviceCommand
+from burp.commands.monitor import Monitor
 from burp.commands.target_command import TargetCommand
 from burp.idf.idf import Command
 from burp.paths.paths import Paths, LogFile
@@ -113,7 +114,7 @@ def cli(ctx: click.Context,
 @click.pass_context
 def build(ctx: click.Context, devices: tuple[str, ...]) -> None:
     injector = ctx.obj
-    asyncio.run(injector.get(TargetCommand).start(
+    run(injector.get(TargetCommand).start(
         command=Command.BUILD,
         log_file=LogFile.BUILD_LOG,
         devices=devices,
@@ -126,7 +127,7 @@ def build(ctx: click.Context, devices: tuple[str, ...]) -> None:
 @click.pass_context
 def clean(ctx: click.Context, devices: tuple[str, ...]) -> None:
     injector = ctx.obj
-    asyncio.run(injector.get(TargetCommand).start(
+    run(injector.get(TargetCommand).start(
         command=Command.CLEAN,
         log_file=LogFile.BUILD_LOG,
         devices=devices,
@@ -139,7 +140,7 @@ def clean(ctx: click.Context, devices: tuple[str, ...]) -> None:
 @click.pass_context
 def fullclean(ctx: click.Context, devices: tuple[str, ...]) -> None:
     injector = ctx.obj
-    asyncio.run(injector.get(TargetCommand).start(
+    run(injector.get(TargetCommand).start(
         command=Command.FULL_CLEAN,
         log_file=LogFile.BUILD_LOG,
         devices=devices,
@@ -152,7 +153,7 @@ def fullclean(ctx: click.Context, devices: tuple[str, ...]) -> None:
 @click.pass_context
 def flash(ctx: click.Context, devices: tuple[str, ...]) -> None:
     injector = ctx.obj
-    asyncio.run(injector.get(DeviceCommand).start(
+    run(injector.get(DeviceCommand).start(
         command=Command.FLASH,
         log_file=LogFile.FLASH_LOG,
         build_first=True,
@@ -166,10 +167,7 @@ def flash(ctx: click.Context, devices: tuple[str, ...]) -> None:
 @click.pass_context
 def monitor(ctx: click.Context, devices: tuple[str, ...]) -> None:
     injector = ctx.obj
-    asyncio.run(injector.get(DeviceCommand).start(
-        command=Command.MONITOR,
-        log_file=LogFile.MONITOR_LOG,
-        build_first=False,
+    run(injector.get(Monitor).start(
         devices=devices,
     ))
 
