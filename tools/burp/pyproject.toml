@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "burp", from = "src"}]
 
 [tool.poetry.scripts]
-burp = "burp.cli:cli"
+burp = "burp.cli.cli:cli"
 
 [tool.poetry.dependencies]
 python = "^3.11"

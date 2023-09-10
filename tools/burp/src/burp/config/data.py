@@ -11,4 +11,5 @@ class Target:
 class Device:
     name: str
     port: str
+    baudrate: int
     target: Target
