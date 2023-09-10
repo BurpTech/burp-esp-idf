@@ -71,7 +71,7 @@ class CheckDevices:
         devices = self._config.get_devices(devices)
         ports: list[ListPortInfo] = comports()
         for device in devices:
-            matching_ports: tuple[ListPortInfo, ...] = tuple(filter(lambda port: port.device == device.port, ports))
+            matching_ports: tuple[ListPortInfo, ...] = tuple(filter(lambda p: p.device == device.port, ports))
             if len(matching_ports) == 0:
                 _LOGGER.error(f'{device.name} on {device.port} not connected')
             else:
