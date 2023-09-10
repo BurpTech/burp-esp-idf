@@ -5,7 +5,7 @@ from pathlib import Path
 
 from injector import inject, singleton
 
-from burp.config import Device, Target
+from burp.config.data import Device, Target
 from burp.paths import Paths, LogFile
 
 _LOGGER = logging.getLogger(__name__)

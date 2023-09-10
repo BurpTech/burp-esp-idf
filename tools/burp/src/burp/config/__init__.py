@@ -1,24 +1,18 @@
 import logging
 from dataclasses import dataclass
+from os.path import isdir
+
+from injector import singleton, inject
+
+from burp.cli.burp_module import ConfigDict
+from burp.config.data import Device, Target
+from burp.paths import Paths
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class ConfigError(Exception):
     pass
-
-
-@dataclass(frozen=True)
-class Target:
-    name: str
-    project: str
-
-
-@dataclass(frozen=True)
-class Device:
-    name: str
-    port: str
-    target: Target
 
 
 @dataclass(frozen=True)
@@ -54,23 +48,28 @@ def _device_from_dict(device_name: str, device: dict) -> Device:
     raise ConfigError(f'Device config should be a dictionary: {device_name}')
 
 
+@singleton
 class Config:
     _devices: tuple[Device, ...]
 
-    def __init__(self, config: dict):
+    @inject
+    def __init__(self, config: ConfigDict, paths: Paths):
         _LOGGER.debug(config)
         if isinstance(config, dict):
             self._devices = tuple(_device_from_dict(
                 device_name,
                 device,
             ) for (device_name, device) in config.items())
-            self.check_valid()
+            self._check_valid(paths)
         else:
             raise ConfigError(f'Config should be a dictionary')
 
-    def check_valid(self):
+    def _check_valid(self, paths: Paths):
         # check that the devices all have distinct ports
         for device in self._devices:
+            target_source_directory = paths.target_source_dir(device.target)
+            if not isdir(target_source_directory):
+                raise ConfigError(f'Target directory for {device.name} not found at: {target_source_directory}')
             port = device.port
             conflicts: tuple[Device, ...] = tuple(filter(lambda d: d.port == port, self._devices))
             if len(conflicts) > 1:
