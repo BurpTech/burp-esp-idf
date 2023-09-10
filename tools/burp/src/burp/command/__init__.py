@@ -3,9 +3,9 @@ from asyncio import TaskGroup
 
 from injector import inject
 
-from burp.config import Config, Target, Project
-from burp.idf import Idf
-from burp.params import DeviceParams, TargetParams, BUILD
+from burp.config import Config, TargetGroup
+from burp.idf import Idf, Command
+from burp.paths import LogFile
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,27 +17,30 @@ class DeviceCommand:
         self._idf = idf
 
     async def start(self,
-                    params: DeviceParams):
+                    command: Command,
+                    log_file: LogFile,
+                    build_first: bool,
+                    devices: tuple[str, ...]):
         async with TaskGroup() as task_group:
-            for project in self._config.projects:
-                for target in project.targets:
-                    task_group.create_task(self._start_target(project,
-                                                              target,
-                                                              params))
+            for target_group in self._config.get_target_groups(devices):
+                task_group.create_task(self._start_target(target_group,
+                                                          command,
+                                                          log_file,
+                                                          build_first))
 
     async def _start_target(self,
-                            project: Project,
-                            target: Target,
-                            params: DeviceParams):
-        if not params.build_first or await self._idf.run_target(project=project,
-                                                                target=target,
-                                                                params=BUILD):
+                            target_group: TargetGroup,
+                            command: Command,
+                            log_file: LogFile,
+                            build_first: bool):
+        if not build_first or await self._idf.run_target(target=target_group.target,
+                                                         command=Command.BUILD,
+                                                         log_file=LogFile.BUILD_LOG):
             async with TaskGroup() as task_group:
-                for device in target.devices:
-                    task_group.create_task(self._idf.run_device(project=project,
-                                                                target=target,
-                                                                device=device,
-                                                                params=params))
+                for device in target_group.devices:
+                    task_group.create_task(self._idf.run_device(device=device,
+                                                                command=command,
+                                                                log_file=log_file))
 
 
 class TargetCommand:
@@ -47,10 +50,11 @@ class TargetCommand:
         self._idf = idf
 
     async def start(self,
-                    params: TargetParams):
+                    command: Command,
+                    log_file: LogFile,
+                    devices: tuple[str, ...]):
         async with TaskGroup() as task_group:
-            for project in self._config.projects:
-                for target in project.targets:
-                    task_group.create_task(self._idf.run_target(project=project,
-                                                                target=target,
-                                                                params=params))
+            for target in self._config.get_targets(devices):
+                task_group.create_task(self._idf.run_target(target=target,
+                                                            command=command,
+                                                            log_file=log_file))

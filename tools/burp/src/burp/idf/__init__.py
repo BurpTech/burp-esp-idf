@@ -1,16 +1,23 @@
 import asyncio
 import logging
+from enum import Enum
 from pathlib import Path
 
-from injector import inject
+from injector import inject, singleton
 
-from burp.cli.cli_module import RootDirectory
-from burp.config import Target, Device, Project
-from burp.params import TargetParams, DeviceParams
+from burp.config import Device, Target
+from burp.paths import Paths, LogFile
 
 _LOGGER = logging.getLogger(__name__)
-_PROJECTS_DIR = Path('projects')
 _IDF_COMMAND = Path('idf.py')
+
+
+class Command(Enum):
+    BUILD = 'build'
+    CLEAN = 'clean'
+    FULL_CLEAN = 'fullclean'
+    FLASH = 'flash'
+    MONITOR = 'monitor'
 
 
 async def _run(cwd: Path,
@@ -34,26 +41,26 @@ async def _run(cwd: Path,
         return code == 0
 
 
+@singleton
 class Idf:
     @inject
-    def __init__(self, root_directory: RootDirectory):
-        self.root_directory = root_directory
+    def __init__(self, paths: Paths):
+        self._paths = paths
 
     async def run_target(self,
                          *,
-                         project: Project,
                          target: Target,
-                         params: TargetParams) -> bool:
-        cwd = self.root_directory / _PROJECTS_DIR / project.name / target.name
-        log_file_path = params.log_file_path(project, target)
-        return await _run(cwd, params.command, log_file_path)
+                         command: Command,
+                         log_file: LogFile) -> bool:
+        cwd = self._paths.target_source_dir(target)
+        log_file_path = self._paths.target_log(target, log_file)
+        return await _run(cwd, command.value, log_file_path)
 
     async def run_device(self,
                          *,
-                         project: Project,
-                         target: Target,
                          device: Device,
-                         params: DeviceParams) -> bool:
-        cwd = self.root_directory / _PROJECTS_DIR / project.name / target.name
-        log_file_path = params.log_file_path(project, target, device)
-        return await _run(cwd, f'-p {device.port} {params.command}', log_file_path)
+                         command: Command,
+                         log_file: LogFile) -> bool:
+        cwd = self._paths.target_source_dir(device.target)
+        log_file_path = self._paths.device_log(device, log_file)
+        return await _run(cwd, f'-p {device.port} {command.value}', log_file_path)
