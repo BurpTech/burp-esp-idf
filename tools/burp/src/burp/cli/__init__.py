@@ -9,7 +9,7 @@ import click
 from injector import Injector
 
 from burp.cli.burp_module import BurpModule
-from burp.command import DeviceCommand, TargetCommand
+from burp.command import DeviceCommand, TargetCommand, CheckDevices
 from burp.idf import Command
 from burp.paths import Paths, LogFile
 
@@ -172,8 +172,18 @@ def monitor(ctx: click.Context, devices: tuple[str, ...]) -> None:
     ))
 
 
+@click.command(help='Check the connected devices. '
+                    'If specified, only devices with names containing any of the given strings will be targeted.')
+@click.argument('devices', nargs=-1)
+@click.pass_context
+def check_devices(ctx: click.Context, devices: tuple[str, ...]) -> None:
+    injector = ctx.obj
+    injector.get(CheckDevices).start(devices)
+
+
 cli.add_command(build)
 cli.add_command(clean)
 cli.add_command(fullclean)
 cli.add_command(flash)
 cli.add_command(monitor)
+cli.add_command(check_devices)

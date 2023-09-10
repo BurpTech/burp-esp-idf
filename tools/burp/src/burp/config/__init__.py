@@ -54,9 +54,29 @@ def _device_from_dict(device_name: str, device: dict) -> Device:
     raise ConfigError(f'Device config should be a dictionary: {device_name}')
 
 
-@dataclass(frozen=True)
 class Config:
     _devices: tuple[Device, ...]
+
+    def __init__(self, config: dict):
+        _LOGGER.debug(config)
+        if isinstance(config, dict):
+            self._devices = tuple(_device_from_dict(
+                device_name,
+                device,
+            ) for (device_name, device) in config.items())
+            self.check_valid()
+        else:
+            raise ConfigError(f'Config should be a dictionary')
+
+    def check_valid(self):
+        # check that the devices all have distinct ports
+        for device in self._devices:
+            port = device.port
+            conflicts: tuple[Device, ...] = tuple(filter(lambda d: d.port == port, self._devices))
+            if len(conflicts) > 1:
+                raise ConfigError(
+                    f'Port {port} assigned to multiple devices: {[conflict.name for conflict in conflicts]}'
+                )
 
     def get_devices(self, devices: tuple[str, ...]) -> tuple[Device, ...]:
         if len(devices) == 0:
@@ -74,15 +94,3 @@ class Config:
             target=target,
             devices=tuple(filter(lambda device: device.target == target, devices))
         ) for target in targets)
-
-
-def config_from_dict(config: dict) -> Config:
-    _LOGGER.debug(config)
-    if isinstance(config, dict):
-        return Config(
-            _devices=tuple(_device_from_dict(
-                device_name,
-                device,
-            ) for (device_name, device) in config.items()),
-        )
-    raise ConfigError(f'Config should be a dictionary')

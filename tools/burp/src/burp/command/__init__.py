@@ -2,6 +2,8 @@ import logging
 from asyncio import TaskGroup
 
 from injector import inject
+from serial.tools.list_ports import comports
+from serial.tools.list_ports_common import ListPortInfo
 
 from burp.config import Config, TargetGroup
 from burp.idf import Idf, Command
@@ -58,3 +60,22 @@ class TargetCommand:
                 task_group.create_task(self._idf.run_target(target=target,
                                                             command=command,
                                                             log_file=log_file))
+
+
+class CheckDevices:
+    @inject
+    def __init__(self, config: Config):
+        self._config = config
+
+    def start(self, devices: tuple[str, ...]):
+        devices = self._config.get_devices(devices)
+        ports: list[ListPortInfo] = comports()
+        for device in devices:
+            matching_ports: tuple[ListPortInfo, ...] = tuple(filter(lambda port: port.device == device.port, ports))
+            if len(matching_ports) == 0:
+                _LOGGER.error(f'{device.name} on {device.port} not connected')
+            else:
+                port = ports.pop(ports.index(matching_ports[0]))
+                _LOGGER.info(f'{device.name} detected on {device.port} - {port.description}')
+        for port in ports:
+            _LOGGER.warning(f'Not configured: {port.device} - {port.description}')

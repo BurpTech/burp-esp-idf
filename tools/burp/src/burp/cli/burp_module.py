@@ -4,7 +4,7 @@ from typing import NewType
 import yaml
 from injector import Module, singleton, provider
 
-from burp.config import Config, config_from_dict
+from burp.config import Config
 
 RootDirectory = NewType('RootDirectory', Path)
 OutputDirectory = NewType('OutputDirectory', Path)
@@ -29,7 +29,7 @@ class BurpModule(Module):
     @provider
     def provide_config(self) -> Config:
         config = yaml.safe_load(self._config_file.read_text())
-        return config_from_dict(config)
+        return Config(config)
 
     @singleton
     @provider
