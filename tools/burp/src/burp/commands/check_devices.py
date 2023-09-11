@@ -1,6 +1,6 @@
 import logging
 
-from injector import inject
+from injector import inject, singleton
 from serial.tools.list_ports_common import ListPortInfo
 from serial.tools.list_ports_posix import comports
 
@@ -9,13 +9,14 @@ from burp.config.config import Config
 _LOGGER = logging.getLogger(__name__)
 
 
+@singleton
 class CheckDevices:
     @inject
     def __init__(self, config: Config):
         self._config = config
 
-    def start(self, devices: tuple[str, ...]):
-        devices = self._config.get_devices(devices)
+    def start(self, device_filter: tuple[str, ...]):
+        devices = self._config.get_devices(device_filter)
         ports: list[ListPortInfo] = comports()
         for device in devices:
             matching_ports: tuple[ListPortInfo, ...] = tuple(filter(lambda p: p.device == device.port, ports))

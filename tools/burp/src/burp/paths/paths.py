@@ -3,8 +3,8 @@ from pathlib import Path
 
 from injector import singleton, inject
 
-from burp.cli.burp_module import RootDirectory, OutputDirectory
 from burp.config.data import Device, Target
+from burp.injector.burp_types import RootDirectory, OutputDirectory
 
 _BURP_LOG = 'burp.log'
 _PROJECTS_DIR = 'projects'

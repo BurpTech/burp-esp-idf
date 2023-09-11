@@ -1,72 +1,26 @@
 import logging
-import sys
 from asyncio import run
-from enum import Enum
 from importlib import metadata
 from pathlib import Path
 
 import click
 from injector import Injector
 
-from burp.cli.burp_module import BurpModule
 from burp.commands.check_devices import CheckDevices
-from burp.commands.device_command import DeviceCommand
+from burp.commands.device_command import Flash
 from burp.commands.monitor import Monitor
-from burp.commands.target_command import TargetCommand
-from burp.idf.idf import Command
-from burp.paths.paths import Paths, LogFile
+from burp.commands.serve import Serve
+from burp.commands.target_command import FullClean, Clean, Build
+from burp.injector.burp_module import BurpModule
+from burp.logger.logging_context import LogLevel, LoggingContext
 
 _LOGGER = logging.getLogger(__name__)
 
-
-class _LogLevel(Enum):
-    CRITICAL = 'CRITICAL'
-    ERROR = 'ERROR'
-    WARNING = 'WARNING'
-    INFO = 'INFO'
-    DEBUG = 'DEBUG'
-
-
 _DEFAULT_CONFIG_FILE = Path('burp.yml')
-_DEFAULT_LOG_LEVEL = _LogLevel.INFO
+_DEFAULT_LOG_LEVEL = LogLevel.INFO
 _DEFAULT_ROOT_DIRECTORY = Path('.')
 _DEFAULT_OUTPUT_DIRECTORY = Path('.burp')
-
-
-class StdOutFormatter(logging.Formatter):
-    grey = "\x1b[38;20m"
-    yellow = "\x1b[33;20m"
-    red = "\x1b[31;20m"
-    bold_red = "\x1b[31;1m"
-    reset = "\x1b[0m"
-    format = "%(name)s: %(levelname)s: %(message)s"
-
-    FORMATS = {
-        logging.DEBUG: grey + format + reset,
-        logging.INFO: grey + format + reset,
-        logging.WARNING: yellow + format + reset,
-        logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
-    }
-
-    def format(self, record):
-        log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt)
-        return formatter.format(record)
-
-
-def _setup_logger(log_level: str, log_file: Path) -> None:
-    logger = logging.getLogger()
-    logger.setLevel(log_level)
-    log_file.parent.mkdir(parents=True, exist_ok=True)
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s: %(name)s: %(levelname)s: %(message)s (%(filename)s:%(lineno)d)'
-    ))
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setFormatter(StdOutFormatter())
-    logger.addHandler(file_handler)
-    logger.addHandler(stdout_handler)
+_DEFAULT_HTTP_PORT = 8080
 
 
 @click.group(help='Tools for developing on multiple burp devices')
@@ -89,7 +43,7 @@ def _setup_logger(log_level: str, log_file: Path) -> None:
 @click.option('-l', '--log-level',
               help=u'The log level',
               show_default=True,
-              type=click.Choice([e.value for e in _LogLevel]),
+              type=click.Choice([e.value for e in LogLevel]),
               default=_DEFAULT_LOG_LEVEL.value)
 @click.pass_context
 def cli(ctx: click.Context,
@@ -102,83 +56,93 @@ def cli(ctx: click.Context,
         config_file=config_file,
         output_directory=output_directory,
     )])
-    paths = injector.get(Paths)
-    _setup_logger(log_level, paths.burp_log())
+    logging_context = injector.get(LoggingContext)
+    logging_context.setup(log_level)
+    _LOGGER.debug('root_directory: %s', root_directory)
     _LOGGER.debug('config_file: %s', config_file)
+    _LOGGER.debug('output_directory: %s', output_directory)
     ctx.obj = injector
 
 
 @click.command(help='Build the projects required by the configured burp devices. '
                     'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('devices', nargs=-1)
+@click.argument('device_filter', nargs=-1)
 @click.pass_context
-def build(ctx: click.Context, devices: tuple[str, ...]) -> None:
+def build(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
     injector = ctx.obj
-    run(injector.get(TargetCommand).start(
-        command=Command.BUILD,
-        log_file=LogFile.BUILD_LOG,
-        devices=devices,
+    run(injector.get(Build).start(
+        device_filter=device_filter,
     ))
 
 
 @click.command(help='Clean the projects required by the configured burp devices. '
                     'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('devices', nargs=-1)
+@click.argument('device_filter', nargs=-1)
 @click.pass_context
-def clean(ctx: click.Context, devices: tuple[str, ...]) -> None:
+def clean(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
     injector = ctx.obj
-    run(injector.get(TargetCommand).start(
-        command=Command.CLEAN,
-        log_file=LogFile.BUILD_LOG,
-        devices=devices,
+    run(injector.get(Clean).start(
+        device_filter=device_filter,
     ))
 
 
 @click.command(help='Perform a full clean on the projects required by the configured burp devices. '
                     'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('devices', nargs=-1)
+@click.argument('device_filter', nargs=-1)
 @click.pass_context
-def fullclean(ctx: click.Context, devices: tuple[str, ...]) -> None:
+def fullclean(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
     injector = ctx.obj
-    run(injector.get(TargetCommand).start(
-        command=Command.FULL_CLEAN,
-        log_file=LogFile.BUILD_LOG,
-        devices=devices,
+    run(injector.get(FullClean).start(
+        device_filter=device_filter,
     ))
 
 
 @click.command(help='Flash the configured burp devices. '
                     'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('devices', nargs=-1)
+@click.argument('device_filter', nargs=-1)
 @click.pass_context
-def flash(ctx: click.Context, devices: tuple[str, ...]) -> None:
+def flash(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
     injector = ctx.obj
-    run(injector.get(DeviceCommand).start(
-        command=Command.FLASH,
-        log_file=LogFile.FLASH_LOG,
-        build_first=True,
-        devices=devices,
+    run(injector.get(Flash).start(
+        device_filter=device_filter,
     ))
 
 
 @click.command(help='Start monitoring the configured burp devices. '
                     'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('devices', nargs=-1)
+@click.argument('device_filter', nargs=-1)
 @click.pass_context
-def monitor(ctx: click.Context, devices: tuple[str, ...]) -> None:
+def monitor(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
     injector = ctx.obj
     run(injector.get(Monitor).start(
-        devices=devices,
+        device_filter=device_filter,
     ))
+
+
+@click.command(help='Serve a web app for managing the configured burp devices. '
+                    'If specified, only devices with names containing any of the given strings will be targeted.')
+@click.option('-p', '--port',
+              help='Port on which to serve the web app',
+              show_default=True,
+              type=click.INT,
+              default=_DEFAULT_HTTP_PORT)
+@click.argument('device_filter', nargs=-1)
+@click.pass_context
+def serve(ctx: click.Context, port: int, device_filter: tuple[str, ...]) -> None:
+    injector = ctx.obj
+    injector.get(Serve).start(
+        port=port,
+        device_filter=device_filter,
+    )
 
 
 @click.command(help='Check the connected devices. '
                     'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('devices', nargs=-1)
+@click.argument('device_filter', nargs=-1)
 @click.pass_context
-def check_devices(ctx: click.Context, devices: tuple[str, ...]) -> None:
+def check_devices(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
     injector = ctx.obj
-    injector.get(CheckDevices).start(devices)
+    injector.get(CheckDevices).start(device_filter)
 
 
 cli.add_command(build)
@@ -186,4 +150,5 @@ cli.add_command(clean)
 cli.add_command(fullclean)
 cli.add_command(flash)
 cli.add_command(monitor)
+cli.add_command(serve)
 cli.add_command(check_devices)
