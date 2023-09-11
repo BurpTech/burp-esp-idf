@@ -4,8 +4,8 @@ from os.path import isdir
 
 from injector import singleton, inject
 
-from burp.cli.burp_module import ConfigDict
 from burp.config.data import Device, Target
+from burp.injector.burp_types import ConfigDict
 from burp.paths.paths import Paths
 
 _LOGGER = logging.getLogger(__name__)
