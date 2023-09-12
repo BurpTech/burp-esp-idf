@@ -1,10 +1,10 @@
 import dataclasses
 import logging
-from asyncio import Protocol, Future, create_task, TaskGroup
 from asyncio import CancelledError
+from asyncio import Protocol, Future, create_task, TaskGroup, StreamWriter
 from base64 import b64encode, b64decode
 from json import dumps, loads
-from typing import Any
+from typing import Any, Callable
 
 from injector import inject, singleton
 from quart import Quart, websocket
@@ -51,13 +51,16 @@ class BurpProxy(AsyncProxy, LoggerProxy):
 class CommandProxy(AsyncProxy, RunnerProxy):
     def __init__(self):
         super().__init__()
+        self._stdin: StreamWriter | None = None
 
-    def start(self):
+    def start(self, stdin: StreamWriter):
         self._append(dumps({
             'event': 'START',
         }))
 
     def complete(self, exit_code: int):
+        if self._stdin is not None:
+            self._stdin = None
         self._append(dumps({
             'event': 'COMPLETE',
             'exit_code': exit_code,
@@ -74,6 +77,11 @@ class CommandProxy(AsyncProxy, RunnerProxy):
             'event': 'STDERR',
             'data': b64encode(data).decode(),
         }))
+
+    async def send_data(self, data: bytes) -> None:
+        if self._stdin is not None:
+            self._stdin.write(data)
+            await self._stdin.drain()
 
 
 class MonitorProxy(AsyncProxy, Protocol):
@@ -103,6 +111,43 @@ class MonitorProxy(AsyncProxy, Protocol):
         if self._transport is not None:
             self._transport.write(data)
             self._transport.flush()
+
+
+def _create_command_websocket(app: Quart,
+                              register: Callable[[CommandProxy], Callable[[], None]],
+                              context: str,
+                              name: str):
+    @app.websocket(f'/{context}/{name}', endpoint=f'{context}-{name}')
+    async def command_websocket():
+        _LOGGER.info(f'{context}_websocket: {name}')
+        proxy = CommandProxy()
+
+        async def sending():
+            while True:
+                events = await proxy.read()
+                for event in events:
+                    await websocket.send(event)
+
+        async def receiving():
+            while True:
+                data = await websocket.receive()
+                event = loads(data)
+                event_type = event.get('event')
+                if event_type == 'DATA':
+                    event_data = event.get('data')
+                    if event_data is not None:
+                        decoded = b64decode(event_data)
+                        _LOGGER.info(f'command: {context}: {name}: received: {decoded}')
+                        await proxy.send_data(decoded)
+
+        deregister = register(proxy)
+        try:
+            async with TaskGroup() as task_group:
+                task_group.create_task(sending())
+                task_group.create_task(receiving())
+        except CancelledError:
+            deregister()
+            raise
 
 
 @singleton
@@ -173,7 +218,9 @@ class Serve:
                     if event_type == 'DATA':
                         event_data = event.get('data')
                         if event_data is not None:
-                            proxy.send_data(b64decode(event.get('data')))
+                            decoded = b64decode(event_data)
+                            _LOGGER.info(f'monitor: {device.name}: received: {decoded}')
+                            proxy.send_data(decoded)
 
             self._monitor.register_proxy(device, proxy)
             try:
@@ -185,62 +232,28 @@ class Serve:
                 raise
 
     def _create_flash_websocket(self, app: Quart, device: Device):
-        @app.websocket(f'/flash/{device.name}', endpoint=f'flash-{device.name}')
-        async def flash_websocket():
-            _LOGGER.info(f'flash_websocket: {device.name}')
-            proxy = CommandProxy()
-
-            async def sending():
-                while True:
-                    events = await proxy.read()
-                    for event in events:
-                        await websocket.send(event)
-
-            async def receiving():
-                while True:
-                    # ignore received data but monitor for
-                    # disconnects (CancelledError)
-                    await websocket.receive()
+        def register(proxy: CommandProxy) -> Callable[[], None]:
+            def deregister():
+                self._flash.deregister_proxy(device, proxy)
 
             self._flash.register_proxy(device, proxy)
-            try:
-                async with TaskGroup() as task_group:
-                    task_group.create_task(sending())
-                    task_group.create_task(receiving())
-            except CancelledError:
-                self._flash.deregister_proxy(device, proxy)
-                raise
+            return deregister
+
+        _create_command_websocket(app, register, 'flash', device.name)
 
     def _create_build_websocket(self, app: Quart, target: Target):
-        @app.websocket(f'/build/{target.name}', endpoint=f'build-{target.name}')
-        async def build_websocket():
-            _LOGGER.info(f'build_websocket: {target.name}')
-            proxy = CommandProxy()
-
-            async def sending():
-                while True:
-                    events = await proxy.read()
-                    for event in events:
-                        await websocket.send(event)
-
-            async def receiving():
-                while True:
-                    # ignore received data but monitor for
-                    # disconnects (CancelledError)
-                    await websocket.receive()
+        def register(proxy: CommandProxy) -> Callable[[], None]:
+            def deregister():
+                self._build.deregister_proxy(target, proxy)
+                self._clean.deregister_proxy(target, proxy)
+                self._full_clean.deregister_proxy(target, proxy)
 
             self._build.register_proxy(target, proxy)
             self._clean.register_proxy(target, proxy)
             self._full_clean.register_proxy(target, proxy)
-            try:
-                async with TaskGroup() as task_group:
-                    task_group.create_task(sending())
-                    task_group.create_task(receiving())
-            except CancelledError:
-                self._build.deregister_proxy(target, proxy)
-                self._clean.deregister_proxy(target, proxy)
-                self._full_clean.deregister_proxy(target, proxy)
-                raise
+            return deregister
+
+        _create_command_websocket(app, register, 'build', target.name)
 
     def _create_websockets(self, device_filter: tuple[str, ...], app: Quart):
         self._create_burp_websocket(app)

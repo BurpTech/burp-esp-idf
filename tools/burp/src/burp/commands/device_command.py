@@ -56,10 +56,10 @@ class DeviceCommand:
     async def start_device(self, device: Device) -> bool:
         if self._pause_monitor:
             self._monitor.pause_device(device)
-        logging_listener = LoggingProxy(self._paths.device_log(device, self._log_file))
-        switchboard_listener = self._proxy_switchboard.get_proxy_for_key(device)
-        listener = MultiProxy([logging_listener, switchboard_listener])
-        idf = self._idf_provider(device, listener)
+        logging_proxy = LoggingProxy(self._paths.device_log(device, self._log_file))
+        switchboard_proxy = self._proxy_switchboard.get_proxy_for_key(device)
+        proxy = MultiProxy([logging_proxy, switchboard_proxy])
+        idf = self._idf_provider(device, proxy)
         success = await idf.run()
         if self._pause_monitor:
             self._monitor.resume_device(device)
@@ -69,12 +69,13 @@ class DeviceCommand:
 @singleton
 class Flash(DeviceCommand):
     @inject
-    def __init__(self, config: Config, paths: Paths, monitor: Monitor, build: Build, idf_builder: ClassAssistedBuilder[FlashIdf]):
+    def __init__(self, config: Config, paths: Paths, monitor: Monitor, build: Build,
+                 idf_builder: ClassAssistedBuilder[FlashIdf]):
         super().__init__(
             config=config,
             paths=paths,
             monitor=monitor,
-            idf_provider=lambda device, listener: idf_builder.build(device=device, listener=listener),
+            idf_provider=lambda device, proxy: idf_builder.build(device=device, proxy=proxy),
             build=build,
             log_file=LogFile.FLASH_LOG,
             build_first=True,
