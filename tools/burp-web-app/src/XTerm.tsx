@@ -1,32 +1,24 @@
 import * as React from "react";
-import {Component, createRef, RefObject} from "react";
+import {useEffect, useRef} from "react";
 import {Terminal} from 'xterm'
-import {FitAddon} from 'xterm-addon-fit'
+import {FitAddon} from "xterm-addon-fit";
 
-interface XTermProps {
-  terminal: Terminal
+interface IProps {
+  terminal: Terminal;
 }
 
-export default class XTerm extends Component<XTermProps> {
-  terminalRef: RefObject<HTMLDivElement>;
-  terminal: Terminal;
+export default function XTerm(props: IProps) {
+  const {terminal} = props;
+  const terminalRef = useRef<HTMLDivElement>(null);
 
-  constructor(props: XTermProps) {
-    super(props);
-    this.terminalRef = createRef();
-    this.terminal = this.props.terminal;
-  }
-
-  componentDidMount() {
-    if (this.terminalRef.current) {
+  useEffect(() => {
+    if (terminalRef.current !== null) {
       const fitAddon = new FitAddon();
-      this.terminal.loadAddon(fitAddon)
-      this.terminal.open(this.terminalRef.current)
+      terminal.loadAddon(fitAddon)
+      terminal.open(terminalRef.current)
       fitAddon.fit()
     }
-  }
+  }, [terminal]);
 
-  render() {
-    return <div ref={this.terminalRef}/>;
-  }
+  return <div ref={terminalRef}/>;
 }

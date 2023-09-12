@@ -32,10 +32,10 @@ class TargetCommand:
         self._proxy_switchboard.get_proxy_for_key(target).deregister(proxy)
 
     async def start_target(self, target: Target) -> bool:
-        logging_listener = LoggingProxy(self._paths.target_log(target, self._log_file))
-        switchboard_listener = self._proxy_switchboard.get_proxy_for_key(target)
-        listener = MultiProxy([logging_listener, switchboard_listener])
-        idf = self._idf_provider(target, listener)
+        logging_proxy = LoggingProxy(self._paths.target_log(target, self._log_file))
+        switchboard_proxy = self._proxy_switchboard.get_proxy_for_key(target)
+        proxy = MultiProxy([logging_proxy, switchboard_proxy])
+        idf = self._idf_provider(target, proxy)
         return await idf.run()
 
     async def start(self,
@@ -52,7 +52,7 @@ class Build(TargetCommand):
         super().__init__(
             config=config,
             paths=paths,
-            idf_provider=lambda target, listener: idf_builder.build(target=target, listener=listener),
+            idf_provider=lambda target, proxy: idf_builder.build(target=target, proxy=proxy),
             log_file=LogFile.BUILD_LOG,
         )
 
@@ -64,7 +64,7 @@ class Clean(TargetCommand):
         super().__init__(
             config=config,
             paths=paths,
-            idf_provider=lambda target, listener: idf_builder.build(target=target, listener=listener),
+            idf_provider=lambda target, proxy: idf_builder.build(target=target, proxy=proxy),
             log_file=LogFile.BUILD_LOG,
         )
 
@@ -76,6 +76,6 @@ class FullClean(TargetCommand):
         super().__init__(
             config=config,
             paths=paths,
-            idf_provider=lambda target, listener: idf_builder.build(target=target, listener=listener),
+            idf_provider=lambda target, proxy: idf_builder.build(target=target, proxy=proxy),
             log_file=LogFile.BUILD_LOG,
         )

@@ -18,11 +18,11 @@ _FLASH = 'flash'
 
 
 class Idf:
-    def __init__(self, cwd: Path, args: str, listener: Proxy):
+    def __init__(self, cwd: Path, args: str, proxy: Proxy):
         self._runner = Runner(
             cwd=cwd,
             cmd=f'{_IDF_COMMAND} {args}',
-            listener=listener,
+            proxy=proxy,
         )
 
     async def run(self) -> bool:
@@ -31,31 +31,31 @@ class Idf:
 
 class BuildIdf(Idf):
     @inject
-    def __init__(self, paths: Paths, target: Target, listener: Proxy):
+    def __init__(self, paths: Paths, target: Target, proxy: Proxy):
         cwd = paths.target_source_dir(target)
         args = _BUILD
-        super().__init__(cwd, args, listener)
+        super().__init__(cwd, args, proxy)
 
 
 class CleanIdf(Idf):
     @inject
-    def __init__(self, paths: Paths, target: Target, listener: Proxy):
+    def __init__(self, paths: Paths, target: Target, proxy: Proxy):
         cwd = paths.target_source_dir(target)
         args = _CLEAN
-        super().__init__(cwd, args, listener)
+        super().__init__(cwd, args, proxy)
 
 
 class FullCleanIdf(Idf):
     @inject
-    def __init__(self, paths: Paths, target: Target, listener: Proxy):
+    def __init__(self, paths: Paths, target: Target, proxy: Proxy):
         cwd = paths.target_source_dir(target)
         args = _FULL_CLEAN
-        super().__init__(cwd, args, listener)
+        super().__init__(cwd, args, proxy)
 
 
 class FlashIdf(Idf):
     @inject
-    def __init__(self, paths: Paths, device: Device, listener: Proxy):
+    def __init__(self, paths: Paths, device: Device, proxy: Proxy):
         cwd = paths.target_source_dir(device.target)
         args = f'-p {device.port} -b {device.baudrate} {_FLASH}'
-        super().__init__(cwd, args, listener)
+        super().__init__(cwd, args, proxy)

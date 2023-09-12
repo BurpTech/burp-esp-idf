@@ -1,24 +1,14 @@
 import * as React from "react";
-import {useEffect, useMemo} from "react";
-import XTerm from "./XTerm";
 import {Container} from "@mui/material";
+import XTerm from "./XTerm";
 import {Terminal} from "xterm";
-import {connectTerminal, TerminalConnectType} from "./lib/ConnectTerminal";
 
-interface BurpProps {
+interface IProps {
+  terminal: Terminal,
 }
 
-export default function Burp(props: BurpProps) {
-  const terminal = useMemo(() => new Terminal(), []);
-
-  useEffect(() => {
-    const ws = connectTerminal(terminal, {
-      type: TerminalConnectType.BURP,
-    });
-    return () => {
-      ws.close();
-    };
-  }, [terminal]);
+export default function Burp(props: IProps) {
+  const {terminal} = props;
 
   return (
     <Container maxWidth={false}>

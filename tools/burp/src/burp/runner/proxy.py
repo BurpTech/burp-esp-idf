@@ -1,10 +1,11 @@
+from asyncio import StreamWriter
 from io import BufferedIOBase
 from pathlib import Path
 from typing import TypeVar, Generic
 
 
 class Proxy:
-    def start(self):
+    def start(self, stdin: StreamWriter):
         raise NotImplementedError()
 
     def receive_stdout(self, data: bytes):
@@ -22,7 +23,7 @@ class LoggingProxy(Proxy):
         self._log_file_path = log_file_path
         self._log_file: BufferedIOBase | None = None
 
-    def start(self):
+    def start(self, stdin: StreamWriter):
         self._log_file = self._log_file_path.open('ab')
 
     def receive_stdout(self, data: bytes):
@@ -47,9 +48,9 @@ class MultiProxy(Proxy):
     def deregister(self, proxy: Proxy):
         self._proxies.remove(proxy)
 
-    def start(self):
+    def start(self, stdin: StreamWriter):
         for proxy in self._proxies:
-            proxy.start()
+            proxy.start(stdin)
 
     def receive_stdout(self, data: bytes):
         for proxy in self._proxies:

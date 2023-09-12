@@ -1,19 +1,22 @@
 import * as React from "react";
-import {Target} from "./lib/Target";
-import {Grid} from "@mui/material";
-import BuildTerminalGridItem from "./BuildTerminalGridItem";
+import Grid from "@mui/material/Unstable_Grid2";
+import BuildGridItem from "./BuildGridItem";
+import {Container} from "@mui/material";
+import {BuildTerminal} from "./lib/terminals/command-terminal";
 
 interface BuildProps {
-  targets: Target[];
+  buildTerminals: BuildTerminal[];
 }
 
 export default function Build(props: BuildProps) {
-  const targets = props.targets;
+  const {buildTerminals} = props;
   return (
-    <Grid container spacing={2}>
-      {targets.map(target => (
-        <BuildTerminalGridItem key={target.name} target={target}/>
-      ))}
-    </Grid>
+    <Container maxWidth={false}>
+      <Grid container spacing={2}>
+        {buildTerminals.map(buildTerminal => (
+          <BuildGridItem key={buildTerminal.target.name} buildTerminal={buildTerminal}/>
+        ))}
+      </Grid>
+    </Container>
   )
 }

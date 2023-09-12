@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useEffect, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {Box, Tab, Tabs} from "@mui/material";
 import {Device} from "./lib/Device";
 import {Target} from "./lib/Target";
@@ -7,6 +7,9 @@ import Monitor from "./Monitor";
 import Flash from "./Flash";
 import Build from './Build';
 import Burp from './Burp';
+import {createBurpTerminal} from "./lib/terminals/burp-terminal";
+import {createMonitorTerminals} from "./lib/terminals/monitor-terminal";
+import {createBuildTerminals, createFlashTerminals} from "./lib/terminals/command-terminal";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -25,9 +28,11 @@ function BurpTabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      <Box>
-        {children}
-      </Box>
+      {value === index && (
+        <Box>
+          {children}
+        </Box>
+      )}
     </div>
   );
 }
@@ -45,6 +50,10 @@ export default function App() {
   const [devices, setDevices] = useState(initialDevices);
   let initialTargets: Target[] = [];
   const [targets, setTargets] = useState(initialTargets);
+  const burpTerminal = useMemo(() => createBurpTerminal(), []);
+  const monitorTerminals = useMemo(() => createMonitorTerminals(devices), [devices]);
+  const flashTerminals = useMemo(() => createFlashTerminals(devices), [devices]);
+  const buildTerminals = useMemo(() => createBuildTerminals(targets), [targets]);
 
   useEffect(() => {
     fetch('/devices')
@@ -76,16 +85,16 @@ export default function App() {
         </Tabs>
       </Box>
       <BurpTabPanel value={tabIndex} index={0}>
-        <Burp/>
+        <Burp terminal={burpTerminal}/>
       </BurpTabPanel>
       <BurpTabPanel value={tabIndex} index={1}>
-        <Monitor devices={devices}/>
+        <Monitor monitorTerminals={monitorTerminals}/>
       </BurpTabPanel>
       <BurpTabPanel value={tabIndex} index={2}>
-        <Flash devices={devices}/>
+        <Flash flashTerminals={flashTerminals}/>
       </BurpTabPanel>
       <BurpTabPanel value={tabIndex} index={3}>
-        <Build targets={targets}/>
+        <Build buildTerminals={buildTerminals}/>
       </BurpTabPanel>
     </Box>
   );
