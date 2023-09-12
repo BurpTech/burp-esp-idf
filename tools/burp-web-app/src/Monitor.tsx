@@ -1,6 +1,5 @@
 import * as React from "react";
-import Grid from "@mui/material/Unstable_Grid2";
-import {Container} from "@mui/material";
+import {Container, Grid} from "@mui/material";
 import MonitorGridItem from "./MonitorGridItem";
 import {MonitorTerminal} from "./lib/terminals/monitor-terminal";
 
