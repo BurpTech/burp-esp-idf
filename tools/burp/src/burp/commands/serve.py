@@ -78,6 +78,13 @@ class CommandProxy(AsyncProxy, RunnerProxy):
             'data': b64encode(data).decode(),
         }))
 
+    def log(self, level: str, msg: str):
+        self._append(dumps({
+            'event': 'LOG',
+            'level': level,
+            'message': msg,
+        }))
+
     async def send_data(self, data: bytes) -> None:
         if self._stdin is not None:
             self._stdin.write(data)
