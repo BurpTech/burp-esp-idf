@@ -7,7 +7,7 @@ interface IProps {
   terminal: Terminal,
 }
 
-export default function Burp(props: IProps) {
+export default function BurpView(props: IProps) {
   const {terminal} = props;
 
   function doCheckDevices() {

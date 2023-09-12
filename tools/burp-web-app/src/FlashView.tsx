@@ -7,7 +7,7 @@ interface FlashProps {
   flashTerminals: FlashTerminal[];
 }
 
-export default function Flash(props: FlashProps) {
+export default function FlashView(props: FlashProps) {
   const {flashTerminals} = props;
 
   function doFlash() {
