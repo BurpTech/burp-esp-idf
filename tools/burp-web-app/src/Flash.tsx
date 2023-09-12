@@ -1,5 +1,4 @@
-import Grid from "@mui/material/Unstable_Grid2";
-import {Container} from "@mui/material";
+import {Container, Grid} from "@mui/material";
 import * as React from "react";
 import FlashGridItem from "./FlashGridItem";
 import {FlashTerminal} from "./lib/terminals/command-terminal";
@@ -13,7 +12,7 @@ export default function Flash(props: FlashProps) {
 
   return (
     <Container maxWidth={false}>
-      <Grid container spacing={2}>
+      <Grid container spacing={2} height="100%">
         {flashTerminals.map(flashTerminal => (
           <FlashGridItem key={flashTerminal.device.name} flashTerminal={flashTerminal}/>
         ))}
