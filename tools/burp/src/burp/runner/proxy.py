@@ -6,16 +6,19 @@ from typing import TypeVar, Generic
 
 class Proxy:
     def start(self, stdin: StreamWriter):
-        raise NotImplementedError()
+        pass
+
+    def log(self, level: str, msg: str):
+        pass
 
     def receive_stdout(self, data: bytes):
-        raise NotImplementedError()
+        pass
 
     def receive_stderr(self, data: bytes):
-        raise NotImplementedError()
+        pass
 
     def complete(self, exit_code: int):
-        raise NotImplementedError()
+        pass
 
 
 class LoggingProxy(Proxy):
@@ -51,6 +54,10 @@ class MultiProxy(Proxy):
     def start(self, stdin: StreamWriter):
         for proxy in self._proxies:
             proxy.start(stdin)
+
+    def log(self, level: str, msg: str):
+        for proxy in self._proxies:
+            proxy.log(level, msg)
 
     def receive_stdout(self, data: bytes):
         for proxy in self._proxies:

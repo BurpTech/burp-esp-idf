@@ -9,6 +9,7 @@ from burp.commands.target_command import Build
 from burp.config.config import Config, TargetGroup
 from burp.config.data import Device
 from burp.idf.idf import Idf, FlashIdf
+from burp.logger.logging_context import LogLevel
 from burp.paths.paths import LogFile, Paths
 from burp.runner.proxy import Proxy, ProxySwitchboard, LoggingProxy, MultiProxy
 
@@ -48,10 +49,19 @@ class DeviceCommand:
                 task_group.create_task(self.start_target(target_group))
 
     async def start_target(self, target_group: TargetGroup):
-        if not self._build_first or await self._build.start_target(target_group.target):
-            async with TaskGroup() as task_group:
+        if self._build_first:
+            for device in target_group.devices:
+                self._proxy_switchboard.get_proxy_for_key(device).log(LogLevel.INFO.value, 'Starting build')
+            if await self._build.start_target(target_group.target):
                 for device in target_group.devices:
-                    task_group.create_task(self.start_device(device))
+                    self._proxy_switchboard.get_proxy_for_key(device).log(LogLevel.INFO.value, 'Build completed')
+            else:
+                for device in target_group.devices:
+                    self._proxy_switchboard.get_proxy_for_key(device).log(LogLevel.ERROR.value, 'Build failed')
+                return
+        async with TaskGroup() as task_group:
+            for device in target_group.devices:
+                task_group.create_task(self.start_device(device))
 
     async def start_device(self, device: Device) -> bool:
         if self._pause_monitor:

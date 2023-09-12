@@ -5,7 +5,7 @@ from injector import singleton
 
 class Proxy:
     def receive(self, line: str):
-        raise NotImplementedError()
+        pass
 
 
 @singleton

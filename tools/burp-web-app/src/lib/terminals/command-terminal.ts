@@ -1,5 +1,5 @@
 import {Terminal} from "xterm";
-import {green, red} from "../colors";
+import {green, red, yellow} from "../colors";
 import {Target} from "../Target";
 import {Device} from "../Device";
 
@@ -10,10 +10,36 @@ enum ReceiveEvent {
   COMPLETE = 'COMPLETE',
   STDOUT = 'STDOUT',
   STDERR = 'STDERR',
+  LOG = 'LOG',
+}
+
+enum LogLevel {
+  CRITICAL = 'CRITICAL',
+  ERROR = 'ERROR',
+  WARNING = 'WARNING',
+  INFO = 'INFO',
+  DEBUG = 'DEBUG',
 }
 
 enum SendEvent {
   DATA = 'DATA',
+}
+
+function getLogColor(level: string): (text: string) => string {
+  switch (level) {
+    case LogLevel.CRITICAL:
+      return red;
+    case LogLevel.ERROR:
+      return red;
+    case LogLevel.WARNING:
+      return yellow;
+    case LogLevel.INFO:
+      return green;
+    case LogLevel.DEBUG:
+      return text => text;
+    default:
+      return text => text;
+  }
 }
 
 function createCommandTerminal(endpoint: string, context: string): Terminal {
@@ -40,6 +66,11 @@ function createCommandTerminal(endpoint: string, context: string): Terminal {
       case ReceiveEvent.STDERR:
         const data = flash_event.data
         terminal.write(base64.decode(data));
+        break;
+      case ReceiveEvent.LOG:
+        const level = flash_event.level
+        const message = flash_event.message
+        terminal.writeln(getLogColor(level)(`${level}: ${message}`));
         break;
     }
   }
