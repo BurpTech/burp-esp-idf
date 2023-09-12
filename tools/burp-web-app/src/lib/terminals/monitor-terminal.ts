@@ -27,10 +27,10 @@ export function createMonitorTerminal(device: Device): Terminal {
     const monitor_event = JSON.parse(event.data);
     switch (monitor_event.event) {
       case ReceiveEvent.CONNECTION_MADE:
-        terminal.writeln(green('Burp: Monitor: Connection made'));
+        terminal.writeln(green('BurpView: MonitorView: Connection made'));
         break;
       case ReceiveEvent.CONNECTION_LOST:
-        terminal.writeln(red('Burp: Monitor: Connection lost'));
+        terminal.writeln(red('BurpView: MonitorView: Connection lost'));
         break;
       case ReceiveEvent.DATA_RECEIVED:
         const data = monitor_event.data
@@ -51,4 +51,13 @@ export function createMonitorTerminals(devices: Device[]): MonitorTerminal[] {
     device,
     terminal: createMonitorTerminal(device),
   }));
+}
+
+export function getMonitorTerminal(device: Device, monitorTerminals: MonitorTerminal[]): Terminal {
+  for (const monitorTerminal of monitorTerminals) {
+    if (monitorTerminal.device.name === device.name) {
+      return monitorTerminal.terminal
+    }
+  }
+  throw new Error(`Unknown device: ${device.name}`)
 }

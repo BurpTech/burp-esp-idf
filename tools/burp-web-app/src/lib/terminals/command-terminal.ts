@@ -89,6 +89,15 @@ export function createBuildTerminals(targets: Target[]): BuildTerminal[] {
   }));
 }
 
+export function getBuildTerminal(target: Target, buildTerminals: BuildTerminal[]): Terminal {
+  for (const buildTerminal of buildTerminals) {
+    if (buildTerminal.target.name === target.name) {
+      return buildTerminal.terminal
+    }
+  }
+  throw new Error(`Unknown target: ${target.name}`)
+}
+
 export interface FlashTerminal {
   device: Device;
   terminal: Terminal;
@@ -97,6 +106,15 @@ export interface FlashTerminal {
 export function createFlashTerminals(devices: Device[]): FlashTerminal[] {
   return devices.map(device => ({
     device,
-    terminal: createCommandTerminal(`flash/${device.name}`, 'Flash'),
+    terminal: createCommandTerminal(`flash/${device.name}`, 'FlashView'),
   }));
+}
+
+export function getFlashTerminal(device: Device, flashTerminals: FlashTerminal[]): Terminal {
+  for (const flashTerminal of flashTerminals) {
+    if (flashTerminal.device.name === device.name) {
+      return flashTerminal.terminal
+    }
+  }
+  throw new Error(`Unknown device: ${device.name}`)
 }

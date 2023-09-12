@@ -7,7 +7,7 @@ interface MonitorProps {
   monitorTerminals: MonitorTerminal[];
 }
 
-export default function Monitor(props: MonitorProps) {
+export default function MonitorView(props: MonitorProps) {
   const {monitorTerminals} = props;
 
   return (
