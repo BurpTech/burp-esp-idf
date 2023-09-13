@@ -314,7 +314,9 @@ class Serve:
             return dumps({'msg': 'Flash started'})
 
     def start(self, port: int, device_filter: tuple[str, ...]):
-        app = Quart('burp')
+        app = Quart('burp',
+                    static_url_path='',
+                    static_folder='../../../burp-web-app/build')
 
         @app.before_serving
         async def start_monitor():
@@ -323,6 +325,10 @@ class Serve:
         @app.after_serving
         async def stop_monitor():
             self._monitor.stop()
+
+        @app.route('/')
+        async def root():
+            return await app.send_static_file('index.html')
 
         self._create_get_endpoints(device_filter, app)
         self._create_websockets(device_filter, app)

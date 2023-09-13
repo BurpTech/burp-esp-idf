@@ -2,6 +2,7 @@ import {Terminal} from "xterm";
 import {green, red, yellow} from "../colors";
 import {Target} from "../Target";
 import {Device} from "../Device";
+import websocketRoot from "./websocket-root";
 
 let base64 = require('base-64');
 
@@ -46,7 +47,7 @@ function createCommandTerminal(endpoint: string, context: string): Terminal {
   const terminal = new Terminal({
     convertEol: true,
   });
-  const ws = new WebSocket(`ws://localhost:8080/${endpoint}`)
+  const ws = new WebSocket(websocketRoot() + `/${endpoint}`)
   terminal.onData((data) => ws.send(JSON.stringify({
     event: SendEvent.DATA,
     data: base64.encode(data),
