@@ -2,21 +2,18 @@ import * as React from "react";
 import {Button, Container, Stack} from "@mui/material";
 import XTerm from "./XTerm";
 import {Terminal} from "xterm";
+import {Burp} from "./lib/websocket/Burp";
 
-interface IProps {
+interface Props {
+  burp: Burp,
   terminal: Terminal,
 }
 
-export default function BurpView(props: IProps) {
-  const {terminal} = props;
+export default function BurpView(props: Props) {
+  const {burp, terminal} = props;
 
   function doCheckDevices() {
-    fetch('/check-devices').then(response => {
-      console.log(response.status);
-      response.json().then(data => {
-        console.log(data);
-      });
-    });
+    burp.checkDevices();
   }
 
   return (

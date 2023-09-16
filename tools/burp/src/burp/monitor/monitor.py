@@ -74,8 +74,8 @@ class Monitor:
                         self._transports[device] = transport
             await sleep(RETRY_DELAY_SECONDS)
 
-    async def start(self, device_filter: tuple[str, ...]):
-        devices = self._config.get_devices(device_filter)
+    async def start(self):
+        devices = self._config.get_devices()
         self._running = True
         await gather(*[create_task(self.start_device(device)) for device in devices])
 

@@ -4,14 +4,14 @@ from typing import Callable
 
 from injector import inject, singleton, ClassAssistedBuilder
 
-from burp.commands.monitor import Monitor
-from burp.commands.target_command import Build
 from burp.config.config import Config, TargetGroup
 from burp.config.data import Device
 from burp.idf.idf import Idf, FlashIdf
 from burp.logger.logging_context import LogLevel
+from burp.monitor.monitor import Monitor
 from burp.paths.paths import LogFile, Paths
 from burp.runner.proxy import Proxy, ProxySwitchboard, LoggingProxy, MultiProxy
+from burp.target_command.target_command import Build
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,10 +42,9 @@ class DeviceCommand:
     def deregister_proxy(self, device: Device, proxy: Proxy):
         self._proxy_switchboard.get_proxy_for_key(device).deregister(proxy)
 
-    async def start(self,
-                    device_filter: tuple[str, ...]):
+    async def start(self):
         async with TaskGroup() as task_group:
-            for target_group in self._config.get_target_groups(device_filter):
+            for target_group in self._config.get_target_groups():
                 task_group.create_task(self.start_target(target_group))
 
     async def start_target(self, target_group: TargetGroup):

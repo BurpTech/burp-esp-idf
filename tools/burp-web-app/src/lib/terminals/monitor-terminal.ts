@@ -1,62 +1,41 @@
 import {Terminal} from "xterm";
 import {green, red} from "../colors";
 import {Device} from "../Device";
-import websocketRoot from "./websocket-root";
+import {DeviceMonitor, DeviceMonitorDataReceivedEvent, EventType} from "../websocket/DeviceMonitor";
 
-let base64 = require('base-64');
-
-enum ReceiveEvent {
-  DATA_RECEIVED = 'DATA_RECEIVED',
-  CONNECTION_LOST = 'CONNECTION_LOST',
-  CONNECTION_MADE = 'CONNECTION_MADE',
-}
-
-enum SendEvent {
-  DATA = 'DATA',
-}
-
-export function createMonitorTerminal(device: Device): Terminal {
+export function createMonitorTerminal(deviceMonitor: DeviceMonitor): Terminal {
   const terminal = new Terminal({
     convertEol: true,
   });
-  const ws = new WebSocket(websocketRoot() + `/monitor/${device.name}`)
-  terminal.onData(data => ws.send(JSON.stringify({
-    event: SendEvent.DATA,
-    data: base64.encode(data),
-  })));
-  ws.onmessage = event => {
-    const monitor_event = JSON.parse(event.data);
-    switch (monitor_event.event) {
-      case ReceiveEvent.CONNECTION_MADE:
-        terminal.writeln(green('BurpView: MonitorView: Connection made'));
-        break;
-      case ReceiveEvent.CONNECTION_LOST:
-        terminal.writeln(red('BurpView: MonitorView: Connection lost'));
-        break;
-      case ReceiveEvent.DATA_RECEIVED:
-        const data = monitor_event.data
-        terminal.write(base64.decode(data));
-        break;
-    }
-  }
+  terminal.onData(data => deviceMonitor.sendData(data));
+  deviceMonitor.addEventListener(EventType.CONNECTION_MADE, () => {
+    terminal.writeln(green('BurpView: MonitorView: Connection made'));
+  });
+  deviceMonitor.addEventListener(EventType.CONNECTION_LOST, () => {
+    terminal.writeln(red('BurpView: MonitorView: Connection lost'));
+  });
+  deviceMonitor.addEventListener(EventType.DATA_RECEIVED, event => {
+    const deviceMonitorDataReceivedEvent = event as DeviceMonitorDataReceivedEvent;
+    terminal.write(deviceMonitorDataReceivedEvent.data);
+  });
   return terminal;
 }
 
 export interface MonitorTerminal {
-  device: Device;
+  deviceMonitor: DeviceMonitor;
   terminal: Terminal;
 }
 
-export function createMonitorTerminals(devices: Device[]): MonitorTerminal[] {
-  return devices.map(device => ({
-    device,
-    terminal: createMonitorTerminal(device),
+export function createMonitorTerminals(deviceMonitors: DeviceMonitor[]): MonitorTerminal[] {
+  return deviceMonitors.map(deviceMonitor => ({
+    deviceMonitor,
+    terminal: createMonitorTerminal(deviceMonitor),
   }));
 }
 
 export function getMonitorTerminal(device: Device, monitorTerminals: MonitorTerminal[]): Terminal {
   for (const monitorTerminal of monitorTerminals) {
-    if (monitorTerminal.device.name === device.name) {
+    if (monitorTerminal.deviceMonitor.device.name === device.name) {
       return monitorTerminal.terminal
     }
   }

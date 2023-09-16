@@ -6,18 +6,19 @@ from pathlib import Path
 import click
 from injector import Injector
 
-from burp.commands.check_devices import CheckDevices
-from burp.commands.device_command import Flash
-from burp.commands.monitor import Monitor
-from burp.commands.serve import Serve
-from burp.commands.target_command import FullClean, Clean, Build
+from burp.check_devices.check_devices import CheckDevices
+from burp.device_command.device_command import Flash
 from burp.injector.burp_module import BurpModule
 from burp.logger.logging_context import LogLevel, LoggingContext
+from burp.monitor.monitor import Monitor
+from burp.serve.serve import Serve
+from burp.target_command.target_command import FullClean, Clean, Build
 
 _LOGGER = logging.getLogger(__name__)
 
 _DEFAULT_CONFIG_FILE = Path('burp.yml')
 _DEFAULT_LOG_LEVEL = LogLevel.INFO
+_DEFAULT_DEVICE_FILTER = ''
 _DEFAULT_ROOT_DIRECTORY = Path('.')
 _DEFAULT_OUTPUT_DIRECTORY = Path('.burp')
 _DEFAULT_HTTP_PORT = 8080
@@ -45,109 +46,90 @@ _DEFAULT_HTTP_PORT = 8080
               show_default=True,
               type=click.Choice([e.value for e in LogLevel]),
               default=_DEFAULT_LOG_LEVEL.value)
+@click.option('-f', '--device-filter',
+              help=u'If specified, only devices with names containing any of the given strings will be targeted',
+              default=_DEFAULT_DEVICE_FILTER)
 @click.pass_context
 def cli(ctx: click.Context,
         config_file: Path,
         root_directory: Path,
         output_directory,
-        log_level: str) -> None:
+        log_level: str,
+        device_filter: str) -> None:
     injector = Injector([BurpModule(
         root_directory=root_directory,
         config_file=config_file,
         output_directory=output_directory,
+        device_filter=device_filter,
     )])
     logging_context = injector.get(LoggingContext)
     logging_context.setup(log_level)
     _LOGGER.debug('root_directory: %s', root_directory)
     _LOGGER.debug('config_file: %s', config_file)
     _LOGGER.debug('output_directory: %s', output_directory)
+    _LOGGER.debug('device_filter: %s', device_filter)
     ctx.obj = injector
 
 
-@click.command(help='Build the projects required by the configured burp devices. '
-                    'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('device_filter', nargs=-1)
+@click.command(help='Build the projects required by the configured burp devices.')
 @click.pass_context
-def build(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
+def build(ctx: click.Context) -> None:
     injector = ctx.obj
-    run(injector.get(Build).start(
-        device_filter=device_filter,
-    ))
+    run(injector.get(Build).start())
 
 
-@click.command(help='Clean the projects required by the configured burp devices. '
-                    'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('device_filter', nargs=-1)
+@click.command(help='Clean the projects required by the configured burp devices.')
 @click.pass_context
-def clean(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
+def clean(ctx: click.Context) -> None:
     injector = ctx.obj
-    run(injector.get(Clean).start(
-        device_filter=device_filter,
-    ))
+    run(injector.get(Clean).start())
 
 
-@click.command(help='Perform a full clean on the projects required by the configured burp devices. '
-                    'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('device_filter', nargs=-1)
+@click.command(help='Perform a full clean on the projects required by the configured burp devices.')
 @click.pass_context
-def fullclean(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
+def full_clean(ctx: click.Context) -> None:
     injector = ctx.obj
-    run(injector.get(FullClean).start(
-        device_filter=device_filter,
-    ))
+    run(injector.get(FullClean).start())
 
 
-@click.command(help='Flash the configured burp devices. '
-                    'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('device_filter', nargs=-1)
+@click.command(help='Flash the configured burp devices.')
 @click.pass_context
-def flash(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
+def flash(ctx: click.Context) -> None:
     injector = ctx.obj
-    run(injector.get(Flash).start(
-        device_filter=device_filter,
-    ))
+    run(injector.get(Flash).start())
 
 
-@click.command(help='Start monitoring the configured burp devices. '
-                    'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('device_filter', nargs=-1)
+@click.command(help='Start monitoring the configured burp devices.')
 @click.pass_context
-def monitor(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
+def monitor(ctx: click.Context) -> None:
     injector = ctx.obj
-    run(injector.get(Monitor).start(
-        device_filter=device_filter,
-    ))
+    run(injector.get(Monitor).start())
 
 
-@click.command(help='Serve a web app for managing the configured burp devices. '
-                    'If specified, only devices with names containing any of the given strings will be targeted.')
+@click.command(help='Serve a web app for managing the configured burp devices.')
 @click.option('-p', '--port',
               help='Port on which to serve the web app',
               show_default=True,
               type=click.INT,
               default=_DEFAULT_HTTP_PORT)
-@click.argument('device_filter', nargs=-1)
 @click.pass_context
-def serve(ctx: click.Context, port: int, device_filter: tuple[str, ...]) -> None:
+def serve(ctx: click.Context, port: int) -> None:
     injector = ctx.obj
     injector.get(Serve).start(
         port=port,
-        device_filter=device_filter,
     )
 
 
-@click.command(help='Check the connected devices. '
-                    'If specified, only devices with names containing any of the given strings will be targeted.')
-@click.argument('device_filter', nargs=-1)
+@click.command(help='Check the connected devices.')
 @click.pass_context
-def check_devices(ctx: click.Context, device_filter: tuple[str, ...]) -> None:
+def check_devices(ctx: click.Context) -> None:
     injector = ctx.obj
-    injector.get(CheckDevices).start(device_filter)
+    injector.get(CheckDevices).start()
 
 
 cli.add_command(build)
 cli.add_command(clean)
-cli.add_command(fullclean)
+cli.add_command(full_clean)
 cli.add_command(flash)
 cli.add_command(monitor)
 cli.add_command(serve)

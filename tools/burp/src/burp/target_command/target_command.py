@@ -38,10 +38,9 @@ class TargetCommand:
         idf = self._idf_provider(target, proxy)
         return await idf.run()
 
-    async def start(self,
-                    device_filter: tuple[str, ...]):
+    async def start(self):
         async with TaskGroup() as task_group:
-            for target in self._config.get_targets(device_filter):
+            for target in self._config.get_targets():
                 task_group.create_task(self.start_target(target))
 
 

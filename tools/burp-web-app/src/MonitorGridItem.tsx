@@ -15,7 +15,7 @@ export default function MonitorGridItem(props: IProps) {
     <GridItem>
       <Box display="flex" justifyContent="center">
         <Typography variant="h6" gutterBottom>
-          {monitorTerminal.device.name}
+          {monitorTerminal.deviceMonitor.device.name}
         </Typography>
       </Box>
       <XTerm terminal={monitorTerminal.terminal}/>

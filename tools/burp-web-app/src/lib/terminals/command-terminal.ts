@@ -2,17 +2,16 @@ import {Terminal} from "xterm";
 import {green, red, yellow} from "../colors";
 import {Target} from "../Target";
 import {Device} from "../Device";
-import websocketRoot from "./websocket-root";
-
-let base64 = require('base-64');
-
-enum ReceiveEvent {
-  START = 'START',
-  COMPLETE = 'COMPLETE',
-  STDOUT = 'STDOUT',
-  STDERR = 'STDERR',
-  LOG = 'LOG',
-}
+import {DeviceFlash} from "../websocket/DeviceFlash";
+import {
+  Command,
+  CommandCompleteEvent,
+  CommandLogEvent,
+  CommandStdErrEvent,
+  CommandStdOutEvent,
+  EventType
+} from "../websocket/Command";
+import {TargetBuild} from "../websocket/TargetBuild";
 
 enum LogLevel {
   CRITICAL = 'CRITICAL',
@@ -20,10 +19,6 @@ enum LogLevel {
   WARNING = 'WARNING',
   INFO = 'INFO',
   DEBUG = 'DEBUG',
-}
-
-enum SendEvent {
-  DATA = 'DATA',
 }
 
 function getLogColor(level: string): (text: string) => string {
@@ -43,56 +38,51 @@ function getLogColor(level: string): (text: string) => string {
   }
 }
 
-function createCommandTerminal(endpoint: string, context: string): Terminal {
+function createCommandTerminal(command: Command, context: string): Terminal {
   const terminal = new Terminal({
     convertEol: true,
   });
-  const ws = new WebSocket(websocketRoot() + `/${endpoint}`)
-  terminal.onData((data) => ws.send(JSON.stringify({
-    event: SendEvent.DATA,
-    data: base64.encode(data),
-  })));
-  ws.onmessage = event => {
-    const flash_event = JSON.parse(event.data);
-    switch (flash_event.event) {
-      case ReceiveEvent.START:
-        terminal.writeln(green(`Burp: ${context}: Start`));
-        break;
-      case ReceiveEvent.COMPLETE:
-        const exit_code = flash_event.exit_code;
-        const color = exit_code === 0 ? green : red;
-        terminal.writeln(color(`Burp: ${context}: Complete: exit code: ${exit_code}`));
-        break;
-      case ReceiveEvent.STDOUT:
-      case ReceiveEvent.STDERR:
-        const data = flash_event.data
-        terminal.write(base64.decode(data));
-        break;
-      case ReceiveEvent.LOG:
-        const level = flash_event.level
-        const message = flash_event.message
-        terminal.writeln(getLogColor(level)(`${level}: ${message}`));
-        break;
-    }
-  }
+  terminal.onData((data) => command.stdin(data));
+  command.addEventListener(EventType.START, () => {
+    terminal.writeln(green(`Burp: ${context}: Start`));
+  });
+  command.addEventListener(EventType.COMPLETE, event => {
+    const commandCompleteEvent = event as CommandCompleteEvent;
+    const exitCode = commandCompleteEvent.exitCode;
+    const color = exitCode === 0 ? green : red;
+    terminal.writeln(color(`Burp: ${context}: Complete: exit code: ${exitCode}`));
+  });
+  command.addEventListener(EventType.STDOUT, event => {
+    const commandStdOutEvent = event as CommandStdOutEvent;
+    terminal.write(commandStdOutEvent.data);
+  });
+  command.addEventListener(EventType.STDERR, event => {
+    const commandStdErrEvent = event as CommandStdErrEvent;
+    terminal.write(commandStdErrEvent.data);
+  });
+  command.addEventListener(EventType.LOG, event => {
+    const commandLogEvent = event as CommandLogEvent;
+    const level = commandLogEvent.level
+    terminal.writeln(getLogColor(level)(`${level}: ${commandLogEvent.message}`));
+  });
   return terminal;
 }
 
 export interface BuildTerminal {
-  target: Target;
+  targetBuild: TargetBuild;
   terminal: Terminal;
 }
 
-export function createBuildTerminals(targets: Target[]): BuildTerminal[] {
-  return targets.map(target => ({
-    target,
-    terminal: createCommandTerminal(`build/${target.name}`, 'Build'),
+export function createBuildTerminals(targetBuilds: TargetBuild[]): BuildTerminal[] {
+  return targetBuilds.map(targetBuild => ({
+    targetBuild,
+    terminal: createCommandTerminal(targetBuild, 'Build'),
   }));
 }
 
 export function getBuildTerminal(target: Target, buildTerminals: BuildTerminal[]): Terminal {
   for (const buildTerminal of buildTerminals) {
-    if (buildTerminal.target.name === target.name) {
+    if (buildTerminal.targetBuild.target.name === target.name) {
       return buildTerminal.terminal
     }
   }
@@ -100,20 +90,20 @@ export function getBuildTerminal(target: Target, buildTerminals: BuildTerminal[]
 }
 
 export interface FlashTerminal {
-  device: Device;
+  deviceFlash: DeviceFlash;
   terminal: Terminal;
 }
 
-export function createFlashTerminals(devices: Device[]): FlashTerminal[] {
-  return devices.map(device => ({
-    device,
-    terminal: createCommandTerminal(`flash/${device.name}`, 'FlashView'),
+export function createFlashTerminals(deviceFlashes: DeviceFlash[]): FlashTerminal[] {
+  return deviceFlashes.map(deviceFlash => ({
+    deviceFlash,
+    terminal: createCommandTerminal(deviceFlash, 'Flash'),
   }));
 }
 
 export function getFlashTerminal(device: Device, flashTerminals: FlashTerminal[]): Terminal {
   for (const flashTerminal of flashTerminals) {
-    if (flashTerminal.device.name === device.name) {
+    if (flashTerminal.deviceFlash.device.name === device.name) {
       return flashTerminal.terminal
     }
   }

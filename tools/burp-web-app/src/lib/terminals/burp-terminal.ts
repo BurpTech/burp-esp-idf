@@ -1,15 +1,15 @@
 import {Terminal} from "xterm";
-import websocketRoot from "./websocket-root";
+import {Burp, BurpLogEvent, EventType} from "../websocket/Burp";
 
-export function createBurpTerminal(): Terminal {
+export function createBurpTerminal(burp: Burp): Terminal {
   const terminal = new Terminal({
     convertEol: true,
   });
-  const ws = new WebSocket(websocketRoot() + '/burp')
-  ws.onmessage = event => {
-    const data = event.data
-    console.log(data)
-    terminal.writeln(data)
-  }
+  burp.addEventListener(EventType.LOG, event => {
+    const burpLogEvent = event as BurpLogEvent;
+    const line = burpLogEvent.line;
+    console.log(line);
+    terminal.writeln(line);
+  })
   return terminal;
 }

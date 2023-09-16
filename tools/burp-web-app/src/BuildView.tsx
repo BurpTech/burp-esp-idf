@@ -2,39 +2,26 @@ import * as React from "react";
 import {Button, Container, Grid, Stack} from "@mui/material";
 import BuildGridItem from "./BuildGridItem";
 import {BuildTerminal} from "./lib/terminals/command-terminal";
+import {Burp} from "./lib/websocket/Burp";
 
-interface BuildProps {
+interface Props {
+  burp: Burp,
   buildTerminals: BuildTerminal[];
 }
 
-export default function Build(props: BuildProps) {
-  const {buildTerminals} = props;
+export default function BuildView(props: Props) {
+  const {burp, buildTerminals} = props;
 
   function doBuild() {
-    fetch('/build').then(response => {
-      console.log(response.status);
-      response.json().then(data => {
-        console.log(data);
-      });
-    });
+    burp.build();
   }
 
   function doClean() {
-    fetch('/clean').then(response => {
-      console.log(response.status);
-      response.json().then(data => {
-        console.log(data);
-      });
-    });
+    burp.clean();
   }
 
   function doFullClean() {
-    fetch('/fullclean').then(response => {
-      console.log(response.status);
-      response.json().then(data => {
-        console.log(data);
-      });
-    });
+    burp.fullClean();
   }
 
   return (
@@ -46,7 +33,7 @@ export default function Build(props: BuildProps) {
       </Stack>
       <Grid container spacing={2} height="100%">
         {buildTerminals.map(buildTerminal => (
-          <BuildGridItem key={buildTerminal.target.name} buildTerminal={buildTerminal}/>
+          <BuildGridItem key={buildTerminal.targetBuild.target.name} buildTerminal={buildTerminal}/>
         ))}
       </Grid>
     </Container>
