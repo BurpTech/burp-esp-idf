@@ -5,7 +5,7 @@ from os.path import isdir
 from injector import singleton, inject
 
 from burp.config.data import Device, Target
-from burp.injector.burp_types import ConfigDict
+from burp.injector.burp_types import ConfigDict, DeviceFilter
 from burp.paths.paths import Paths
 
 _LOGGER = logging.getLogger(__name__)
@@ -66,11 +66,10 @@ def _device_from_dict(device_name: str, device: dict) -> Device:
 
 @singleton
 class Config:
-    _devices: tuple[Device, ...]
-
     @inject
-    def __init__(self, config: ConfigDict, paths: Paths):
+    def __init__(self, device_filter: DeviceFilter, config: ConfigDict, paths: Paths):
         _LOGGER.debug(config)
+        self._device_filter = device_filter
         if isinstance(config, dict):
             self._devices = tuple(_device_from_dict(
                 device_name,
@@ -93,17 +92,17 @@ class Config:
                     f'Port {port} assigned to multiple devices: {[conflict.name for conflict in conflicts]}'
                 )
 
-    def get_devices(self, devices: tuple[str, ...]) -> tuple[Device, ...]:
-        if len(devices) == 0:
+    def get_devices(self) -> tuple[Device, ...]:
+        if len(self._device_filter) == 0:
             return self._devices
-        return tuple(filter(lambda device: any(name in device.name for name in devices), self._devices))
+        return tuple(filter(lambda device: any(name in device.name for name in self._device_filter), self._devices))
 
-    def get_targets(self, devices: tuple[str, ...]) -> tuple[Target, ...]:
-        devices = self.get_devices(devices)
+    def get_targets(self) -> tuple[Target, ...]:
+        devices = self.get_devices()
         return tuple(set(device.target for device in devices))
 
-    def get_target_groups(self, devices: tuple[str, ...]) -> tuple[TargetGroup, ...]:
-        devices = self.get_devices(devices)
+    def get_target_groups(self) -> tuple[TargetGroup, ...]:
+        devices = self.get_devices()
         targets = tuple(set(device.target for device in devices))
         return tuple(TargetGroup(
             target=target,

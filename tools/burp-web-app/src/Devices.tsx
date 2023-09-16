@@ -5,6 +5,7 @@ import {BuildTerminal, FlashTerminal, getBuildTerminal, getFlashTerminal} from "
 import {Terminal} from "xterm";
 import {Device} from "./lib/Device";
 import DeviceView from './DeviceView';
+import {Burp} from "./lib/websocket/Burp";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -39,20 +40,22 @@ function a11yProps(index: number) {
   };
 }
 
-interface IProps {
+interface Props {
   setViewModeTasks: () => void;
   devices: Device[];
+  burp: Burp;
   burpTerminal: Terminal;
   monitorTerminals: MonitorTerminal[];
   flashTerminals: FlashTerminal[];
   buildTerminals: BuildTerminal[];
 }
 
-export default function Devices(props: IProps) {
+export default function Devices(props: Props) {
   const [tabIndex, setTabIndex] = React.useState(0);
   const {
     setViewModeTasks,
     devices,
+    burp,
     burpTerminal,
     monitorTerminals,
     flashTerminals,
@@ -77,7 +80,8 @@ export default function Devices(props: IProps) {
       </Box>
       {devices.map((device, index) => (
         <BurpTabPanel value={tabIndex} index={index}>
-          <DeviceView burpTerminal={burpTerminal}
+          <DeviceView burp={burp}
+                      burpTerminal={burpTerminal}
                       monitorTerminal={getMonitorTerminal(device, monitorTerminals)}
                       flashTerminal={getFlashTerminal(device, flashTerminals)}
                       buildTerminal={getBuildTerminal(device.target, buildTerminals)}/>

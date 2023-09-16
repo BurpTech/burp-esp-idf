@@ -15,7 +15,7 @@ export default function FlashGridItem(props: IProps) {
     <GridItem>
       <Box display="flex" justifyContent="center">
         <Typography variant="h6" gutterBottom>
-          {flashTerminal.device.name}
+          {flashTerminal.deviceFlash.device.name}
         </Typography>
       </Box>
       <XTerm terminal={flashTerminal.terminal}/>

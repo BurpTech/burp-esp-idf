@@ -15,8 +15,8 @@ class CheckDevices:
     def __init__(self, config: Config):
         self._config = config
 
-    def start(self, device_filter: tuple[str, ...]):
-        devices = self._config.get_devices(device_filter)
+    def start(self):
+        devices = self._config.get_devices()
         ports: list[ListPortInfo] = comports()
         for device in devices:
             matching_ports: tuple[ListPortInfo, ...] = tuple(filter(lambda p: p.device == device.port, ports))

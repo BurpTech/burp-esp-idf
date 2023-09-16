@@ -2,11 +2,12 @@ import * as React from 'react';
 import {Box, Button, Stack, Tab, Tabs} from "@mui/material";
 import MonitorView from "./MonitorView";
 import FlashView from "./FlashView";
-import Build from './Build';
+import BuildView from './BuildView';
 import BurpView from './BurpView';
 import {MonitorTerminal} from "./lib/terminals/monitor-terminal";
 import {BuildTerminal, FlashTerminal} from "./lib/terminals/command-terminal";
 import {Terminal} from "xterm";
+import {Burp} from "./lib/websocket/Burp";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -41,18 +42,20 @@ function a11yProps(index: number) {
   };
 }
 
-interface IProps {
+interface Props {
   setViewModeDevices: () => void;
+  burp: Burp,
   burpTerminal: Terminal;
   monitorTerminals: MonitorTerminal[];
   flashTerminals: FlashTerminal[];
   buildTerminals: BuildTerminal[];
 }
 
-export default function Tasks(props: IProps) {
+export default function Tasks(props: Props) {
   const [tabIndex, setTabIndex] = React.useState(0);
   const {
     setViewModeDevices,
+    burp,
     burpTerminal,
     monitorTerminals,
     flashTerminals,
@@ -77,16 +80,16 @@ export default function Tasks(props: IProps) {
         </Stack>
       </Box>
       <BurpTabPanel value={tabIndex} index={0}>
-        <BurpView terminal={burpTerminal}/>
+        <BurpView burp={burp} terminal={burpTerminal}/>
       </BurpTabPanel>
       <BurpTabPanel value={tabIndex} index={1}>
         <MonitorView monitorTerminals={monitorTerminals}/>
       </BurpTabPanel>
       <BurpTabPanel value={tabIndex} index={2}>
-        <FlashView flashTerminals={flashTerminals}/>
+        <FlashView burp={burp} flashTerminals={flashTerminals}/>
       </BurpTabPanel>
       <BurpTabPanel value={tabIndex} index={3}>
-        <Build buildTerminals={buildTerminals}/>
+        <BuildView burp={burp} buildTerminals={buildTerminals}/>
       </BurpTabPanel>
     </Box>
   );

@@ -2,21 +2,18 @@ import {Button, Container, Grid, Stack} from "@mui/material";
 import * as React from "react";
 import FlashGridItem from "./FlashGridItem";
 import {FlashTerminal} from "./lib/terminals/command-terminal";
+import {Burp} from "./lib/websocket/Burp";
 
-interface FlashProps {
+interface Props {
+  burp: Burp,
   flashTerminals: FlashTerminal[];
 }
 
-export default function FlashView(props: FlashProps) {
-  const {flashTerminals} = props;
+export default function FlashView(props: Props) {
+  const {burp, flashTerminals} = props;
 
   function doFlash() {
-    fetch('/flash').then(response => {
-      console.log(response.status);
-      response.json().then(data => {
-        console.log(data);
-      });
-    });
+    burp.flash();
   }
 
   return (
@@ -26,7 +23,7 @@ export default function FlashView(props: FlashProps) {
       </Stack>
       <Grid container spacing={2} height="100%">
         {flashTerminals.map(flashTerminal => (
-          <FlashGridItem key={flashTerminal.device.name} flashTerminal={flashTerminal}/>
+          <FlashGridItem key={flashTerminal.deviceFlash.device.name} flashTerminal={flashTerminal}/>
         ))}
       </Grid>
     </Container>

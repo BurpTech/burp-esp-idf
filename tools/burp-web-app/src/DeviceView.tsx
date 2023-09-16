@@ -2,16 +2,19 @@ import * as React from "react";
 import {Button, Container, Grid, Stack} from "@mui/material";
 import {Terminal} from "xterm";
 import DeviceGridItem from "./DeviceGridItem";
+import {Burp} from "./lib/websocket/Burp";
 
-interface BuildProps {
+interface Props {
+  burp: Burp,
   burpTerminal: Terminal,
   monitorTerminal: Terminal,
   flashTerminal: Terminal,
   buildTerminal: Terminal,
 }
 
-export default function DeviceView(props: BuildProps) {
+export default function DeviceView(props: Props) {
   const {
+    burp,
     burpTerminal,
     monitorTerminal,
     flashTerminal,
@@ -19,48 +22,23 @@ export default function DeviceView(props: BuildProps) {
   } = props;
 
   function doFlash() {
-    fetch('/flash').then(response => {
-      console.log(response.status);
-      response.json().then(data => {
-        console.log(data);
-      });
-    });
+    burp.flash();
   }
 
   function doBuild() {
-    fetch('/build').then(response => {
-      console.log(response.status);
-      response.json().then(data => {
-        console.log(data);
-      });
-    });
+    burp.build();
   }
 
   function doClean() {
-    fetch('/clean').then(response => {
-      console.log(response.status);
-      response.json().then(data => {
-        console.log(data);
-      });
-    });
+    burp.clean();
   }
 
   function doFullClean() {
-    fetch('/fullclean').then(response => {
-      console.log(response.status);
-      response.json().then(data => {
-        console.log(data);
-      });
-    });
+    burp.fullClean();
   }
 
   function doCheckDevices() {
-    fetch('/check-devices').then(response => {
-      console.log(response.status);
-      response.json().then(data => {
-        console.log(data);
-      });
-    });
+    burp.checkDevices();
   }
 
   return (

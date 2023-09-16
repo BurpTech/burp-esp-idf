@@ -15,7 +15,7 @@ export default function BuildGridItem(props: IProps) {
     <GridItem>
       <Box display="flex" justifyContent="center">
         <Typography variant="h6" gutterBottom>
-          {buildTerminal.target.name}
+          {buildTerminal.targetBuild.target.name}
         </Typography>
       </Box>
       <XTerm terminal={buildTerminal.terminal}/>
