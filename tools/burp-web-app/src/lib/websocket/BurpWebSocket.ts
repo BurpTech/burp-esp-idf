@@ -24,6 +24,7 @@ export class BurpWebSocket {
 
   public connect(): () => void {
     const isDev = process.env.NODE_ENV === 'development';
+    console.log(`BurpWebSocket: connect: isDev: ${isDev}`);
     const ws = isDev
       ? new WebSocket('ws://localhost:8080/ws')
       : new WebSocket(websocketRoot() + 'ws');
