@@ -2,6 +2,8 @@
 #include "burp-sandbox.h"
 #include "secrets.h"
 
+#include <burp-control-button.h>
+
 #include <esp_wifi.h>
 #include <esp_mac.h>
 #include <mdns.h>
@@ -26,6 +28,8 @@ static char hostName[STRLEN(HOST_NAME_PREFIX) + (MAC_ADDRESS_LEN * 2)];
 
 void start(void)
 {
+    burp_control_button_start();
+
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 

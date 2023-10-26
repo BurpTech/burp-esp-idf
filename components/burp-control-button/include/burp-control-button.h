@@ -1,1 +1,1 @@
-void func(void);
+void burp_control_button_start(void);
