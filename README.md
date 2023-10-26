@@ -33,7 +33,7 @@ The development environment is dependent on the `idf.py` tool. Set this up befor
 
 A more complete guide to the `idf.py` tool can be found [here](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-guides/build-system.html#idf-py)
 
-Generally you will want to work in the device specific projects. Eg. if using CLion (Intellij), then open and create projects in each of the device specific project directories. Doing it this way will avoid problems of selecting the correct `CMakeLists.txt` to configure dependencies, etc. From then on you will likley only need to work in a single variant in order to update the target independent code.
+Generally you will want to work in the device specific projects. Eg. if using CLion (Intellij), then open and create projects in each of the device specific project directories. Doing it this way will avoid problems of selecting the correct `CMakeLists.txt` to configure dependencies, etc. From then on you will likely only need to work in a single variant in order to update the target independent code.
 
 Use the `burp` CLI tool to build, flash and monitor all target devices at once.
 
