@@ -4,13 +4,15 @@
 
 #define BURP_MOMENTARY_BUTTON_TASK_STACK_DEPTH 500UL
 
-#define BURP_MOMENTARY_BUTTON_DOWN 0
-#define BURP_MOMENTARY_BUTTON_UP 1
+enum {
+    BURP_MOMENTARY_BUTTON_DOWN = 0,
+    BURP_MOMENTARY_BUTTON_UP
+};
 
-struct BurpMomentaryButton{
+struct BurpMomentaryButton {
     const gpio_num_t gpioNum;
     const esp_event_base_t espEventBase;
-    const char * taskName;
+    const char *taskName;
     UBaseType_t priority;
     StackType_t stackBuffer[BURP_MOMENTARY_BUTTON_TASK_STACK_DEPTH];
     StaticTask_t taskBuffer;
@@ -24,4 +26,4 @@ struct BurpMomentaryButton{
         .priority = PRIORITY\
     }
 
-esp_err_t burpMomentaryButtonStart(struct BurpMomentaryButton *pBurpMomentaryButton);
+esp_err_t burpMomentaryButtonInit(struct BurpMomentaryButton *pBurpMomentaryButton);

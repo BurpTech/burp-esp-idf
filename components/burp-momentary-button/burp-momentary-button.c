@@ -37,8 +37,6 @@ static void task(void *args) {
             } else {
                 ESP_ERROR_CHECK(esp_timer_start_once(debounceTimer, DEBOUNCE_TIMER_US));
             }
-        } else {
-//            printf("Could not take from the task notify.\r\n");
         }
     }
 }
@@ -50,7 +48,7 @@ static void handle_isr(void *args) {
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
-esp_err_t burpMomentaryButtonStart(struct BurpMomentaryButton *pBurpMomentaryButton) {
+esp_err_t burpMomentaryButtonInit(struct BurpMomentaryButton *pBurpMomentaryButton) {
     pBurpMomentaryButton->taskHandle = xTaskCreateStatic(
             &task,
             pBurpMomentaryButton->taskName,
@@ -60,11 +58,17 @@ esp_err_t burpMomentaryButtonStart(struct BurpMomentaryButton *pBurpMomentaryBut
             pBurpMomentaryButton->stackBuffer,
             &pBurpMomentaryButton->taskBuffer
     );
-    ESP_RETURN_ON_ERROR(gpio_reset_pin(pBurpMomentaryButton->gpioNum), LOG_TAG, "Failed to reset pin: %s", pBurpMomentaryButton->taskName);
-    ESP_RETURN_ON_ERROR(gpio_set_direction(pBurpMomentaryButton->gpioNum, GPIO_MODE_INPUT), LOG_TAG, "Failed to set pin as input: %s", pBurpMomentaryButton->taskName);
-    ESP_RETURN_ON_ERROR(gpio_set_pull_mode(pBurpMomentaryButton->gpioNum, GPIO_PULLUP_ONLY), LOG_TAG, "Failed to pull up pin: %s", pBurpMomentaryButton->taskName);
-    ESP_RETURN_ON_ERROR(gpio_set_intr_type(pBurpMomentaryButton->gpioNum, GPIO_INTR_ANYEDGE), LOG_TAG, "Failed to set interrupt type: %s", pBurpMomentaryButton->taskName);
-    ESP_RETURN_ON_ERROR(gpio_intr_enable(pBurpMomentaryButton->gpioNum), LOG_TAG, "Failed to enable interrupt: %s", pBurpMomentaryButton->taskName);
-    ESP_RETURN_ON_ERROR(gpio_isr_handler_add(pBurpMomentaryButton->gpioNum, &handle_isr, (void *) pBurpMomentaryButton), LOG_TAG, "Failed to register ISR handler: %s", pBurpMomentaryButton->taskName);
+    ESP_RETURN_ON_ERROR(gpio_reset_pin(pBurpMomentaryButton->gpioNum), LOG_TAG, "Failed to reset pin: %s",
+                        pBurpMomentaryButton->taskName);
+    ESP_RETURN_ON_ERROR(gpio_set_direction(pBurpMomentaryButton->gpioNum, GPIO_MODE_INPUT), LOG_TAG,
+                        "Failed to set pin as input: %s", pBurpMomentaryButton->taskName);
+    ESP_RETURN_ON_ERROR(gpio_set_pull_mode(pBurpMomentaryButton->gpioNum, GPIO_PULLUP_ONLY), LOG_TAG,
+                        "Failed to pull up pin: %s", pBurpMomentaryButton->taskName);
+    ESP_RETURN_ON_ERROR(gpio_set_intr_type(pBurpMomentaryButton->gpioNum, GPIO_INTR_ANYEDGE), LOG_TAG,
+                        "Failed to set interrupt type: %s", pBurpMomentaryButton->taskName);
+    ESP_RETURN_ON_ERROR(gpio_intr_enable(pBurpMomentaryButton->gpioNum), LOG_TAG, "Failed to enable interrupt: %s",
+                        pBurpMomentaryButton->taskName);
+    ESP_RETURN_ON_ERROR(gpio_isr_handler_add(pBurpMomentaryButton->gpioNum, &handle_isr, (void *) pBurpMomentaryButton),
+                        LOG_TAG, "Failed to register ISR handler: %s", pBurpMomentaryButton->taskName);
     return ESP_OK;
 }
