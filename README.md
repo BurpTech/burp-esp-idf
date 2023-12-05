@@ -63,7 +63,9 @@ As a convention, it is recommended to use the associated `<application_name>` fo
 - Switch to the `projects/<project_name>/` directory
 - Create the ESP-IDF project with `idf.py create-project <target_name>`
 - Switch to the `target_name/` directory
-- In `CMakeLists.txt`, change the `project` field to include the `<project_name>`, ie. change `project(<targetname>)` to `project(<project_name>-<target_name>)`. This convention will provide better namespacing for your IDE project names
+- In `CMakeLists.txt`
+  - change the `project` field to include the `<project_name>`, ie. change `project(<targetname>)` to `project(<project_name>-<target_name>)`. This convention will provide better namespacing for your IDE project names
+  - set the `EXTRA_COMPONENT_DIRS` variable so that the project can find the applications and components, ie. add `set(EXTRA_COMPONENT_DIRS "../../../applications" "../../../components")`
 - Set the target device using `idf.py set-target <device_name>`
 - Set further configuration options with `idf.py menuconfig`
 - Integrate the associated application component

@@ -1,3 +1,3 @@
 idf_component_register(SRCS "burp-sandbox.c"
-                    INCLUDE_DIRS "include"
-                    REQUIRES esp_wifi mdns spi_flash)
+        INCLUDE_DIRS "include"
+        PRIV_REQUIRES esp_wifi mdns spi_flash burp-control-button burp-momentary-button burp-blinker)
