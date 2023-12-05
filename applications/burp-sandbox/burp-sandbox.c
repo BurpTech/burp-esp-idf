@@ -3,6 +3,7 @@
 #include "secrets.h"
 
 #include <burp-control-button.h>
+#include <burp-momentary-button.h>
 
 #include <esp_wifi.h>
 #include <esp_mac.h>
@@ -15,6 +16,8 @@ void on_wifi_sta_start(void* handler_arg, esp_event_base_t base, int32_t id, voi
 void on_wifi_sta_connected(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data);
 void on_ip_sta_got_ip(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data);
 void on_wifi_sta_disconnected(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data);
+void onButtonDown(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data);
+void onButtonUp(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data);
 
 #define STRLEN(s) (sizeof(s)/sizeof(s[0]))
 
@@ -26,12 +29,28 @@ void on_wifi_sta_disconnected(void* handler_arg, esp_event_base_t base, int32_t 
 static uint8_t baseMacAddress[MAC_ADDRESS_LEN];
 static char hostName[STRLEN(HOST_NAME_PREFIX) + (MAC_ADDRESS_LEN * 2)];
 
+ESP_EVENT_DEFINE_BASE(BUTTON_EVENT);
+
+static struct BurpMomentaryButton button = BURP_MOMENTARY_BUTTON(
+        GPIO_NUM_0,
+        BUTTON_EVENT,
+        "button",
+        1
+);
+
 void start(void)
 {
     burp_control_button_start();
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    ESP_ERROR_CHECK(esp_event_handler_register(BUTTON_EVENT, BURP_MOMENTARY_BUTTON_DOWN, onButtonDown, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(BUTTON_EVENT, BURP_MOMENTARY_BUTTON_UP, onButtonUp, NULL));
+
+    ESP_ERROR_CHECK(gpio_install_isr_service(GPIO_INTR_ANYEDGE));
+
+    ESP_ERROR_CHECK(burpMomentaryButtonStart(&button));
 
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_START, on_wifi_sta_start, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, on_wifi_sta_connected, NULL));
@@ -101,4 +120,12 @@ void on_wifi_sta_disconnected(void* handler_arg, esp_event_base_t base, int32_t 
 {
     printf("Wifi STA disconnected\n");
     ESP_ERROR_CHECK(esp_wifi_connect());
+}
+
+void onButtonDown(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data) {
+    printf("Button down\n");
+}
+
+void onButtonUp(void* handler_arg, esp_event_base_t base, int32_t id, void* event_data) {
+    printf("Button up\n");
 }
