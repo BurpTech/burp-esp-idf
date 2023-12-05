@@ -2,8 +2,9 @@
 #include "burp-sandbox.h"
 #include "secrets.h"
 
-#include <burp-control-button.h>
 #include <burp-momentary-button.h>
+#include <burp-control-button.h>
+#include <burp-blinker.h>
 
 #include <esp_wifi.h>
 #include <esp_mac.h>
@@ -42,7 +43,6 @@ static struct BurpMomentaryButton button = BURP_MOMENTARY_BUTTON(
         1
 );
 
-#define COMMAND_COUNT 7
 enum {
     COMMAND_WAIT_NOOP,
     COMMAND_NOOP,
@@ -60,42 +60,56 @@ enum {
     COMMAND_FACTORY_RESET
 };
 
-#define CONTROL_WAIT 2000000
+#define BLINK_ON_US 100000
+#define BLINK_OFF_US 200000
 
+#define NOOP_BLINK_COUNT 1
+#define RESET_BLINK_COUNT 2
+#define QUERY_BLINK_COUNT 3
+#define ACCESS_POINT_BLINK_COUNT 4
+#define WPS_CONFIG_BLINK_COUNT 5
+#define WIFI_BLINK_COUNT 6
+#define FACTORY_RESET_BLINK_COUNT 7
+
+#define CONTROL_PAUSE_US 2000000
+
+#define CONTROL_WAIT(BLINK_COUNT) ((BLINK_ON_US * BLINK_COUNT) + (BLINK_OFF_US * (BLINK_COUNT - 1)) + CONTROL_PAUSE_US)
+
+#define COMMAND_COUNT 7
 static struct BurpControlButtonCommand commands[COMMAND_COUNT] = {{
                                                                           COMMAND_WAIT_NOOP,
                                                                           COMMAND_NOOP,
-                                                                          CONTROL_WAIT
+                                                                          CONTROL_WAIT(NOOP_BLINK_COUNT)
                                                                   },
                                                                   {
                                                                           COMMAND_WAIT_RESET,
                                                                           COMMAND_RESET,
-                                                                          CONTROL_WAIT
+                                                                          CONTROL_WAIT(RESET_BLINK_COUNT)
                                                                   },
                                                                   {
                                                                           COMMAND_WAIT_QUERY,
                                                                           COMMAND_QUERY,
-                                                                          CONTROL_WAIT
+                                                                          CONTROL_WAIT(QUERY_BLINK_COUNT)
                                                                   },
                                                                   {
                                                                           COMMAND_WAIT_ACCESS_POINT,
                                                                           COMMAND_ACCESS_POINT,
-                                                                          CONTROL_WAIT
+                                                                          CONTROL_WAIT(ACCESS_POINT_BLINK_COUNT)
                                                                   },
                                                                   {
                                                                           COMMAND_WAIT_WPS_CONFIG,
                                                                           COMMAND_WPS_CONFIG,
-                                                                          CONTROL_WAIT
+                                                                          CONTROL_WAIT(WPS_CONFIG_BLINK_COUNT)
                                                                   },
                                                                   {
                                                                           COMMAND_WAIT_WIFI,
                                                                           COMMAND_WIFI,
-                                                                          CONTROL_WAIT
+                                                                          CONTROL_WAIT(WIFI_BLINK_COUNT)
                                                                   },
                                                                   {
                                                                           COMMAND_WAIT_FACTORY_RESET,
                                                                           COMMAND_FACTORY_RESET,
-                                                                          CONTROL_WAIT
+                                                                          CONTROL_WAIT(FACTORY_RESET_BLINK_COUNT)
                                                                   }};
 
 static struct BurpControlButton control = BURP_CONTROL_BUTTON(
@@ -106,6 +120,26 @@ static struct BurpControlButton control = BURP_CONTROL_BUTTON(
         commands
 );
 
+#define BLINKER_CONFIG_COUNT 7
+static struct BurpBlinkerConfig blinks[BLINKER_CONFIG_COUNT] = {
+        BURP_BLINKER_CONFIG("noop", CONTROL_EVENT, COMMAND_WAIT_NOOP, NOOP_BLINK_COUNT),
+        BURP_BLINKER_CONFIG("reset", CONTROL_EVENT, COMMAND_WAIT_RESET, RESET_BLINK_COUNT),
+        BURP_BLINKER_CONFIG("query", CONTROL_EVENT, COMMAND_WAIT_QUERY, QUERY_BLINK_COUNT),
+        BURP_BLINKER_CONFIG("access point", CONTROL_EVENT, COMMAND_WAIT_ACCESS_POINT, ACCESS_POINT_BLINK_COUNT),
+        BURP_BLINKER_CONFIG("WPS config", CONTROL_EVENT, COMMAND_WAIT_WPS_CONFIG, WPS_CONFIG_BLINK_COUNT),
+        BURP_BLINKER_CONFIG("wifi", CONTROL_EVENT, COMMAND_WAIT_WIFI, WIFI_BLINK_COUNT),
+        BURP_BLINKER_CONFIG("factory reset", CONTROL_EVENT, COMMAND_WAIT_FACTORY_RESET, FACTORY_RESET_BLINK_COUNT)
+};
+
+static struct BurpBlinker blinker = BURP_BLINKER(
+        "blinker",
+        GPIO_NUM_3,
+        BLINK_ON_US,
+        BLINK_OFF_US,
+        BLINKER_CONFIG_COUNT,
+        blinks
+);
+
 void start(void) {
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
@@ -113,8 +147,9 @@ void start(void) {
 
     ESP_ERROR_CHECK(burpMomentaryButtonInit(&button));
     ESP_ERROR_CHECK(burpControlButtonInit(&control));
-    ESP_ERROR_CHECK(esp_event_handler_register(CONTROL_EVENT, ESP_EVENT_ANY_ID, onControl, NULL));
 
+    ESP_ERROR_CHECK(esp_event_handler_register(CONTROL_EVENT, ESP_EVENT_ANY_ID, onControl, NULL));
+    ESP_ERROR_CHECK(burpBlinkerInit(&blinker));
 
     ESP_ERROR_CHECK(esp_netif_init());
 

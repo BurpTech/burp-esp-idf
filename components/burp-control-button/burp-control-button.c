@@ -4,7 +4,7 @@
 
 #define LOG_TAG "BurpControlButton"
 
-esp_err_t doWait(struct BurpControlButton *pBurpControlButton) {
+static esp_err_t doWait(struct BurpControlButton *pBurpControlButton) {
     ESP_RETURN_ON_ERROR(
             esp_timer_start_once(pBurpControlButton->waitTimer, pBurpControlButton->currentCommand->waitUs),
             LOG_TAG,
@@ -22,7 +22,7 @@ esp_err_t doWait(struct BurpControlButton *pBurpControlButton) {
     return ESP_OK;
 }
 
-esp_err_t doCommand(struct BurpControlButton *pBurpControlButton) {
+static esp_err_t doCommand(struct BurpControlButton *pBurpControlButton) {
     ESP_RETURN_ON_ERROR(
             esp_timer_stop(pBurpControlButton->waitTimer),
             LOG_TAG,
@@ -41,18 +41,18 @@ esp_err_t doCommand(struct BurpControlButton *pBurpControlButton) {
     return ESP_OK;
 }
 
-void onButtonDown(void *handler_arg, esp_event_base_t base, int32_t id, void *event_data) {
+static void onButtonDown(void *handler_arg, esp_event_base_t base, int32_t id, void *event_data) {
     struct BurpControlButton *pBurpControlButton = (struct BurpControlButton *) handler_arg;
     pBurpControlButton->currentCommand = pBurpControlButton->commands;
     ESP_ERROR_CHECK(doWait(pBurpControlButton));
 }
 
-void onButtonUp(void *handler_arg, esp_event_base_t base, int32_t id, void *event_data) {
+static void onButtonUp(void *handler_arg, esp_event_base_t base, int32_t id, void *event_data) {
     struct BurpControlButton *pBurpControlButton = (struct BurpControlButton *) handler_arg;
     ESP_ERROR_CHECK(doCommand(pBurpControlButton));
 }
 
-void waitTimeout(void *args) {
+static void waitTimeout(void *args) {
     struct BurpControlButton *pBurpControlButton = (struct BurpControlButton *) args;
     pBurpControlButton->currentCommand++;
     if (pBurpControlButton->currentCommand == &pBurpControlButton->commands[pBurpControlButton->commandCount]) {
