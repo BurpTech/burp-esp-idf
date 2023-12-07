@@ -5,38 +5,42 @@
 #define LOG_TAG "BurpControlButton"
 
 static esp_err_t doWait(struct BurpControlButton *pBurpControlButton) {
+    struct BurpControlButtonCommand const *currentCommand = pBurpControlButton->currentCommand;
     ESP_RETURN_ON_ERROR(
-            esp_timer_start_once(pBurpControlButton->waitTimer, pBurpControlButton->currentCommand->waitUs),
+            esp_timer_start_once(pBurpControlButton->waitTimer, currentCommand->waitUs),
             LOG_TAG,
             "Failed to start timer: %s",
             pBurpControlButton->name
     );
     ESP_RETURN_ON_ERROR(
-            esp_event_post(pBurpControlButton->espEventBase, pBurpControlButton->currentCommand->enterWaitEventId, NULL,
+            esp_event_post(currentCommand->enterWaitEventBase, currentCommand->enterWaitEventId, NULL,
                            0, portMAX_DELAY),
             LOG_TAG,
-            "Failed to post wait event: %s: %ld",
+            "Failed to post wait event: %s: %s",
             pBurpControlButton->name,
-            pBurpControlButton->currentCommand->enterWaitEventId
+            currentCommand->name
     );
     return ESP_OK;
 }
 
 static esp_err_t doCommand(struct BurpControlButton *pBurpControlButton) {
+    struct BurpControlButtonCommand const *currentCommand = pBurpControlButton->currentCommand;
     ESP_RETURN_ON_ERROR(
             esp_timer_stop(pBurpControlButton->waitTimer),
             LOG_TAG,
             "Failed to stop wait timer: %s",
             pBurpControlButton->name
     );
-    int32_t eventId = pBurpControlButton->currentCommand->commandEventId;
+    esp_event_base_t eventBase = currentCommand->commandEventBase;
+    int32_t eventId = currentCommand->commandEventId;
+    const char *name = currentCommand->name;
     pBurpControlButton->currentCommand = NULL;
     ESP_RETURN_ON_ERROR(
-            esp_event_post(pBurpControlButton->espEventBase, eventId, NULL, 0, portMAX_DELAY),
+            esp_event_post(eventBase, eventId, NULL, 0, portMAX_DELAY),
             LOG_TAG,
-            "Failed to post command event: %s: %ld",
+            "Failed to post command event: %s: %s",
             pBurpControlButton->name,
-            eventId
+            name
     );
     return ESP_OK;
 }

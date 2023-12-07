@@ -1,3 +1,6 @@
+#ifndef BURP_MOMENTARY_BUTTON_H
+#define BURP_MOMENTARY_BUTTON_H
+
 #include <esp_err.h>
 #include <driver/gpio.h>
 #include <esp_event.h>
@@ -10,20 +13,21 @@ enum {
 };
 
 struct BurpMomentaryButton {
-    const gpio_num_t gpioNum;
+    const char *name;
     const esp_event_base_t espEventBase;
-    const char *taskName;
     UBaseType_t priority;
     StackType_t stackBuffer[BURP_MOMENTARY_BUTTON_TASK_STACK_DEPTH];
     StaticTask_t taskBuffer;
     TaskHandle_t taskHandle;
+    gpio_num_t buttonPin;
 };
 
-#define BURP_MOMENTARY_BUTTON(GPIO_NUM, ESP_EVENT_BASE, TASK_NAME, PRIORITY) {\
-        .gpioNum = GPIO_NUM,\
+#define BURP_MOMENTARY_BUTTON(NAME, ESP_EVENT_BASE, PRIORITY) {\
+        .name = NAME,\
         .espEventBase = ESP_EVENT_BASE,\
-        .taskName = TASK_NAME,\
         .priority = PRIORITY\
     }
 
-esp_err_t burpMomentaryButtonInit(struct BurpMomentaryButton *pBurpMomentaryButton);
+esp_err_t burpMomentaryButtonInit(gpio_num_t buttonPin, struct BurpMomentaryButton *pBurpMomentaryButton);
+
+#endif //BURP_MOMENTARY_BUTTON_H

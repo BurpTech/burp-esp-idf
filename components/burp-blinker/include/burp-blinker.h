@@ -1,3 +1,6 @@
+#ifndef BURP_BLINKER_H
+#define BURP_BLINKER_H
+
 #include <esp_event.h>
 #include <esp_timer.h>
 #include <driver/gpio.h>
@@ -19,22 +22,23 @@ struct BurpBlinkerConfig {
 
 struct BurpBlinker {
     const char *name;
-    const gpio_num_t ledPin;
     const uint64_t onUs;
     const uint64_t offUs;
     const uint32_t configCount;
     struct BurpBlinkerConfig *configs;
     esp_timer_handle_t delayTimer;
     uint32_t remainingBlinks;
+    gpio_num_t ledPin;
 };
 
-#define BURP_BLINKER(NAME, LED_PIN, ON_US, OFF_US, CONFIG_COUNT, CONFIGS) { \
+#define BURP_BLINKER(NAME, ON_US, OFF_US, CONFIG_COUNT, CONFIGS) { \
         .name = NAME,\
-        .ledPin = LED_PIN,\
         .onUs = ON_US,\
         .offUs = OFF_US,\
         .configCount = CONFIG_COUNT,\
         .configs = CONFIGS\
     }
 
-esp_err_t burpBlinkerInit(struct BurpBlinker *pBurpBlinker);
+esp_err_t burpBlinkerInit(gpio_num_t ledPin, struct BurpBlinker *pBurpBlinker);
+
+#endif //BURP_BLINKER_H

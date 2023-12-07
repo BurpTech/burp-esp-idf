@@ -54,7 +54,8 @@ static void onBlinkEvent(void *handler_arg, esp_event_base_t base, int32_t id, v
     ESP_ERROR_CHECK(doBlink(pBurpBlinker));
 }
 
-esp_err_t burpBlinkerInit(struct BurpBlinker *pBurpBlinker) {
+esp_err_t burpBlinkerInit(gpio_num_t ledPin, struct BurpBlinker *pBurpBlinker) {
+    pBurpBlinker->ledPin = ledPin;
     esp_timer_create_args_t waitTimerArgs = {
             &delayTimeout,
             pBurpBlinker,
