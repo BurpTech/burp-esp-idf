@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "burp-http-server.h"
 
-void func(void)
-{
-
+esp_err_t burpHttpServerInit(void) {
+    return ESP_OK;
 }
