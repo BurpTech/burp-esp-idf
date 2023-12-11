@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, View } from "react-native";
+import {SafeAreaView, StatusBar, StyleSheet, View} from 'react-native';
 
 import {Devices} from './components/Devices.tsx';
 import {ZeroconfStatus} from './components/ZeroconfStatus.tsx';
@@ -10,6 +10,7 @@ var styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'space-between',
     backgroundColor: 'black',
+    // Set the top margin for Android (which does not support SafeAreaView)
     marginTop: StatusBar.currentHeight || 0,
   },
   contentContainer: {
