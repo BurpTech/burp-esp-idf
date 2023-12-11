@@ -8,11 +8,18 @@ export enum Status {
 
 export interface ZeroconfState {
   status: Status;
+  query: string | undefined;
   error: string | undefined;
+}
+
+export interface ZeroconfError {
+  query: string;
+  message: string;
 }
 
 const initialState: ZeroconfState = {
   status: Status.IDLE,
+  query: undefined,
   error: undefined,
 };
 
@@ -20,17 +27,20 @@ export const zeroconf = createSlice({
   name: 'zeroconf',
   initialState,
   reducers: {
-    setScanning: state => {
+    setScanning: (state, action: PayloadAction<string>) => {
       state.status = Status.SCANNING;
+      state.query = action.payload;
       state.error = undefined;
     },
     setIdle: state => {
       state.status = Status.IDLE;
+      state.query = undefined;
       state.error = undefined;
     },
-    setError: (state, action: PayloadAction<string>) => {
+    setError: (state, action: PayloadAction<ZeroconfError>) => {
       state.status = Status.ERROR;
-      state.error = action.payload;
+      state.query = action.payload.query;
+      state.error = action.payload.message;
     },
   },
 });

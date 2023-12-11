@@ -6,6 +6,11 @@ export const selectZeroconfStatus = createSelector(
   state => state.status,
 );
 
+export const selectZeroconfQuery = createSelector(
+  [selectZeroconfState],
+  state => state.query,
+);
+
 export const selectZeroconfError = createSelector(
   [selectZeroconfState],
   state => state.error,

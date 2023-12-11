@@ -10,10 +10,12 @@ const SERVICE_TYPE = 'burptech';
 const SERVICE_PROTOCOL = 'tcp';
 const SERVICE_DOMAIN = 'local.';
 
+const QUERY = `${SERVICE_TYPE}: ${SERVICE_PROTOCOL}: ${SERVICE_DOMAIN}`;
+
 const zeroconf = new Zeroconf();
 
 zeroconf.on('start', () => {
-  store.dispatch(setScanning());
+  store.dispatch(setScanning(QUERY));
 });
 
 zeroconf.on('stop', () => {
@@ -21,13 +23,18 @@ zeroconf.on('stop', () => {
 });
 
 zeroconf.on('error', error => {
-  store.dispatch(setError(error.message));
+  store.dispatch(
+    setError({
+      query: QUERY,
+      message: error.message,
+    }),
+  );
 });
 
-zeroconf.on('found', host => {
+zeroconf.on('found', name => {
   store.dispatch(
     addFound({
-      host,
+      name: name,
     }),
   );
 });
@@ -35,8 +42,8 @@ zeroconf.on('found', host => {
 zeroconf.on('resolved', service => {
   store.dispatch(
     addResolved({
-      host: service.host,
-      resolved: service,
+      name: service.name,
+      service: service,
     }),
   );
 });

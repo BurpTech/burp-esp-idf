@@ -1,19 +1,27 @@
 import React from 'react';
-import {FlatList, StyleSheet, Text, View} from 'react-native';
+import {FlatList, StyleSheet, Text} from 'react-native';
 import {useBurpSelector} from '../store';
 import {selectDevices} from '../store/devices/selectors.ts';
+
+const baseItemStyle = {
+  backgroundColor: 'white',
+  padding: 10,
+  fontSize: 18,
+  height: 44,
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 22,
   },
-  item: {
-    backgroundColor: 'white',
+  foundItem: {
+    ...baseItemStyle,
+    color: 'gray',
+  },
+  resolvedItem: {
+    ...baseItemStyle,
     color: 'black',
-    padding: 10,
-    fontSize: 18,
-    height: 44,
   },
 });
 
@@ -21,11 +29,16 @@ export function Devices() {
   const devices = useBurpSelector(selectDevices);
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={devices}
-        renderItem={({item}) => <Text style={styles.item}>{item.host}</Text>}
-      />
-    </View>
+    <FlatList
+      data={devices}
+      renderItem={({item}) => (
+        <Text
+          style={
+            item.service !== undefined ? styles.resolvedItem : styles.foundItem
+          }>
+          {item.name}
+        </Text>
+      )}
+    />
   );
 }

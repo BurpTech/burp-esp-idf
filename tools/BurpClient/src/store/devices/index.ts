@@ -1,20 +1,14 @@
 import {createEntityAdapter, createSlice} from '@reduxjs/toolkit';
-
-export interface Resolved {
-  addresses: string[];
-  name: string;
-  fullName: string;
-  port: number;
-}
+import {Service} from 'react-native-zeroconf';
 
 export interface Device {
-  host: string;
-  resolved?: Resolved;
+  name: string;
+  service?: Service;
 }
 
 export const devicesAdapter = createEntityAdapter({
-  selectId: (device: Device) => device.host,
-  sortComparer: (a, b) => a.host.localeCompare(b.host),
+  selectId: (device: Device) => device.name,
+  sortComparer: (a, b) => a.name.localeCompare(b.name),
 });
 
 export const devices = createSlice({
