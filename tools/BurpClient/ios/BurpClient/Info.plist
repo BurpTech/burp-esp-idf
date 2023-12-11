@@ -31,6 +31,12 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_burptech._tcp.</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>The Burp client needs to use local network discovery in order to detect your Burp devices</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>UILaunchStoryboardName</key>
@@ -47,11 +53,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>NSBonjourServices</key>
-    <array>
-         <string>_burptech._tcp.</string>
-    </array>
-    <key>NSLocalNetworkUsageDescription</key>
-    <string>The Burp client needs to use local network discovery in order to detect your Burp devices</string>
 </dict>
 </plist>
