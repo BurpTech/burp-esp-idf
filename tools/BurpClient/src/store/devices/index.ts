@@ -1,9 +1,14 @@
 import {createEntityAdapter, createSlice} from '@reduxjs/toolkit';
 import {Service} from 'react-native-zeroconf';
 
+export interface Config {
+  alias: string;
+}
+
 export interface Device {
   name: string;
   service?: Service;
+  config?: Config;
 }
 
 export const devicesAdapter = createEntityAdapter({

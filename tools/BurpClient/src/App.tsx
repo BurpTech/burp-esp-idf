@@ -1,7 +1,6 @@
 import React from 'react';
+import {BurpNavigation} from './components/BurpNavigation.tsx';
 import {SafeAreaView, StatusBar, StyleSheet, View} from 'react-native';
-
-import {Devices} from './components/Devices.tsx';
 import {ZeroconfStatus} from './components/ZeroconfStatus.tsx';
 
 var styles = StyleSheet.create({
@@ -25,7 +24,7 @@ function App(): React.JSX.Element {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.contentContainer}>
-        <Devices />
+        <BurpNavigation />
       </View>
       <View style={styles.footerContainer}>
         <ZeroconfStatus />
