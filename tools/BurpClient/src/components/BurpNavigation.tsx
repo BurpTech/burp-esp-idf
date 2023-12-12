@@ -24,7 +24,7 @@ export function BurpNavigation() {
         <Stack.Screen
           name={DEVICES_ROUTE_NAME}
           component={DevicesScreen}
-          options={{title: 'Devices'}}
+          options={{title: 'Burp Devices'}}
         />
         <Stack.Screen
           name={DEVICE_ROUTE_NAME}
