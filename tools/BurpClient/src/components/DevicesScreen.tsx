@@ -1,5 +1,5 @@
 import React from 'react';
-import {Devices} from './Devices.tsx';
+import {ResolvedDevices} from './ResolvedDevices.tsx';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   BurpStackParamList,
@@ -14,7 +14,7 @@ type Props = NativeStackScreenProps<
 
 export function DevicesScreen({navigation}: Props) {
   return (
-    <Devices
+    <ResolvedDevices
       onPress={device => navigation.navigate(DEVICE_ROUTE_NAME, {device})}
     />
   );

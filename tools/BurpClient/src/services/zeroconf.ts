@@ -1,7 +1,8 @@
 import Zeroconf from 'react-native-zeroconf';
 import {store} from '../store';
 import {setError, setIdle, setScanning} from '../store/zeroconf';
-import {addFound, addResolved} from '../store/devices';
+import {addFoundDevice} from '../store/foundDevices';
+import {addResolvedDevice} from '../store/resolvedDevices';
 
 const INTERVAL_MS: number = 10000;
 const SCAN_TIME_MS: number = 5000;
@@ -33,17 +34,19 @@ zeroconf.on('error', error => {
 
 zeroconf.on('found', name => {
   store.dispatch(
-    addFound({
-      name: name,
+    addFoundDevice({
+      id: name,
+      timestamp: Date.now(),
     }),
   );
 });
 
 zeroconf.on('resolved', service => {
   store.dispatch(
-    addResolved({
-      name: service.name,
+    addResolvedDevice({
+      id: service.name,
       service: service,
+      timestamp: Date.now(),
     }),
   );
 });
@@ -55,7 +58,7 @@ function scan() {
   }, SCAN_TIME_MS);
 }
 
-export function start() {
+export function startZeroconf() {
   scan();
   setInterval(() => {
     scan();

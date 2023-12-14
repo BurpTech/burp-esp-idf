@@ -2,6 +2,7 @@ import React from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BurpStackParamList, DEVICE_ROUTE_NAME} from './BurpNavigation.tsx';
 import {Text, View} from 'react-native';
+import {useGetConfigQuery} from '../services/devicesApi.ts';
 
 type Props = NativeStackScreenProps<
   BurpStackParamList,
@@ -10,11 +11,14 @@ type Props = NativeStackScreenProps<
 
 export function DeviceScreen({route}: Props) {
   const {device} = route.params;
+  const {data, error, isLoading} = useGetConfigQuery(device);
   let count = 0;
+
+  if (error) console.log(error);
 
   return (
     <View>
-      <Text>{device.name}</Text>
+      <Text>{device.id}</Text>
       {device.service !== undefined && (
         <View>
           <Text>{device.service.name}</Text>
@@ -31,6 +35,17 @@ export function DeviceScreen({route}: Props) {
           ))}
         </View>
       )}
+      <View>
+        {error ? (
+          <Text>Error loading config</Text>
+        ) : isLoading ? (
+          <Text>Loading config...</Text>
+        ) : data ? (
+          <>
+            <Text>{data.alias}</Text>
+          </>
+        ) : null}
+      </View>
     </View>
   );
 }
